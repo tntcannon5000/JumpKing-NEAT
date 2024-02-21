@@ -178,9 +178,9 @@ class King():
 
 		# Particles
 
-		self.jump_particle = King_Particle("images\\particles\\jump_particle.png", 5, 1, 32)
+		self.jump_particle = King_Particle("images/particles/jump_particle.png", 5, 1, 32)
 
-		self.snow_jump_particle = King_Particle("images\\particles\\snow_jump_particle.png", 4, 3, 36)
+		self.snow_jump_particle = King_Particle("images/particles/snow_jump_particle.png", 4, 3, 36)
 
 		self.level_change = 0
 
@@ -335,14 +335,15 @@ class King():
 
 					elif self.jumpCount > self.maxJumpCount:
 
-						if keys[pygame.K_RIGHT]:
+						if keys[pygame.K_RIGHT] and keys[pygame.K_UP]:
 
 							self._jump("right")
 
-						elif keys[pygame.K_LEFT]:
+						elif keys[pygame.K_LEFT] and keys[pygame.K_UP]:
 
 							self._jump("left")
-						else:
+							
+						elif keys[pygame.K_UP]:
 							self._jump("up")
 
 				else:
