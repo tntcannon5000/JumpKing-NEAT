@@ -327,7 +327,9 @@ class King():
 				if keys[pygame.K_SPACE]:
 					self.splatCount = 0
 					self.idle_counter = 0
-					self.jumpCount += 1
+
+					if self.jumpCount < self.maxJumpCount:
+						self.jumpCount += 1
 
 					if not self.isCrouch:
 
@@ -342,7 +344,7 @@ class King():
 						elif keys[pygame.K_LEFT] and keys[pygame.K_UP]:
 
 							self._jump("left")
-							
+
 						elif keys[pygame.K_UP]:
 							self._jump("up")
 
