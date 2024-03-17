@@ -67,7 +67,7 @@ class King():
 		# Static 
 
 		self.screen = screen
-
+		
 		self.sprites = King_Sprites().king_images
 
 		self.levels = levels
