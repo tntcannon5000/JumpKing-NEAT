@@ -37,7 +37,6 @@ class Environment:
 		self._load_stats()
 
 	def _load_settings(self):	
-
 		if "settings.dat" in os.listdir("Saves"):
 
 			with open("Saves/settings.dat", "rb") as file:

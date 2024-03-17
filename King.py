@@ -67,7 +67,7 @@ class King():
 		# Static 
 
 		self.screen = screen
-
+		
 		self.sprites = King_Sprites().king_images
 
 		self.levels = levels
@@ -329,6 +329,7 @@ class King():
 					self.idle_counter = 0
 
 					if self.jumpCount < self.maxJumpCount:
+						if self.jumpCount < self.maxJumpCount:
 						self.jumpCount += 1
 
 					if not self.isCrouch:
@@ -337,15 +338,16 @@ class King():
 
 					elif self.jumpCount > self.maxJumpCount:
 
-						if keys[pygame.K_RIGHT] and keys[pygame.K_UP]:
+						if keys[pygame.K_RIGHT] and keys[pygame.K_UP] and keys[pygame.K_UP]:
 
 							self._jump("right")
 
-						elif keys[pygame.K_LEFT] and keys[pygame.K_UP]:
+						elif keys[pygame.K_LEFT] and keys[pygame.K_UP] and keys[pygame.K_UP]:
 
 							self._jump("left")
 
 						elif keys[pygame.K_UP]:
+
 							self._jump("up")
 
 				else:
