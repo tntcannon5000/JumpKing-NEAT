@@ -111,7 +111,7 @@ class JKGame:
 						and (not king.isSplat or king.splatCount > king.splatDuration)
 			return available
 
-	def step(self, action):
+	def step(self, actions):
 		
 		#old_y = (self.king.levels.max_level - self.king.levels.current_level) * 360 + self.king.y
 		while True:
@@ -119,8 +119,8 @@ class JKGame:
 			self._check_events()
 			if not os.environ["pause"]:
 				if not self.move_available():
-					action = None
-				self._update_gamestuff(action=action)
+					actions = None
+				self._update_gamestuff(actions=actions)
 
 			self._update_gamescreen()
 			self._update_guistuff()
@@ -197,9 +197,9 @@ class JKGame:
 
 				self._resize_screen(event.w, event.h)
 
-	def _update_gamestuff(self, action=None):
+	def _update_gamestuff(self, actions=None):
 
-		self.levels.update_levels(self.kings, self.babe, agentCommand=action)
+		self.levels.update_levels(self.kings, self.babe, agentCommand=actions)
 
 	def _update_guistuff(self):
 
@@ -337,7 +337,36 @@ def train():
 				yourmother = False
 
 
+def train(n_generations):
+
+    action_dict = {
+        0: 'right',
+        1: 'left',
+        2: 'right+space',
+        3: 'left+space',
+        # 4: 'idle',
+        # 5: 'space',
+    }
+
+    env = JKGame(max_step=1000, n_kings=5)
+    env.reset()
+    action_keys = list(action_dict.keys())
+
+    for generation in range(n_generations):
+        env.reset()
+        yourmother = True
+        yourcounter = 0
+        while yourmother:
+            actions = []
+            for king in env.kings:
+                action = np.random.choice(action_keys)
+                actions.append(action)
+            env.step(actions)
+            yourcounter += 1
+            if yourcounter > 30:
+                yourmother = False
+
 if __name__ == "__main__":
 	#Game = JKGame()
 	#Game.running()
-	train()
+	train(1)

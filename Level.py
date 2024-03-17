@@ -224,8 +224,10 @@ class Levels:
 				self.END = self.Ending_Animation.update(self.levels[self.current_level], king, babe)
 
 		else:
-			for king in kings:
-				king.update(agentCommand=agentCommand)
+			for index, king in enumerate(kings):
+				
+				if agentCommand is not None:
+					king.update(agentCommand=agentCommand[index])
 
 				babe.update(king)
 
