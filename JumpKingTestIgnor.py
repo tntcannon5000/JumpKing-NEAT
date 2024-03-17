@@ -40,7 +40,7 @@ class JKGame:
 		self.clock = pygame.time.Clock()
 
 		self.fps = int(os.environ.get("fps"))
- 
+
 		self.bg_color = (0, 0, 0)
 
 		self.screen = pygame.display.set_mode((int(os.environ.get("screen_width")) * int(os.environ.get("window_scale")), int(os.environ.get("screen_height")) * int(os.environ.get("window_scale"))), pygame.HWSURFACE|pygame.DOUBLEBUF)#|pygame.SRCALPHA)
@@ -52,7 +52,7 @@ class JKGame:
 		
 		self.game_screen_x = 0
 
-		pygame.display.set_icon(pygame.image.load("images\\sheets\\JumpKingIcon.ico"))
+		pygame.display.set_icon(pygame.image.load("images/sheets/JumpKingIcon.ico"))
 
 		self.levels = Levels(self.game_screen)
 
@@ -329,7 +329,7 @@ def train():
 		done, state = env.reset()
 		yourmother = True
 		yourcounter = 0
-		while yourmother:
+		while yourmother:     # game ends when loop exits
 			action = np.random.choice(action_keys)
 			next_state, reward, done = env.step(action)
 			yourcounter += 1
