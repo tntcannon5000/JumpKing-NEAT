@@ -56,14 +56,17 @@ class JKGame:
 
 		self.levels = Levels(self.game_screen)
 
-		self.king = King(self.game_screen, self.levels)
+		#self.king = King(self.game_screen, self.levels)
 		
+		self.kings = []
+		for _ in range(n_kings):
+			self.kings.append(King(self.game_screen, self.levels))
 
 		self.babe = Babe(self.game_screen, self.levels)
 
-		self.menus = Menus(self.game_screen, self.levels, self.king)
+		#self.menus = Menus(self.game_screen, self.levels, self.king)
 
-		self.start = Start(self.game_screen, self.menus)
+		#self.start = Start(self.game_screen, self.menus)
 
 		self.step_counter = 0
 		self.max_step = max_step
@@ -73,7 +76,9 @@ class JKGame:
 		pygame.display.set_caption('Jump King At Home XD')
 
 	def reset(self):
-		self.king.reset()
+		
+		for king in self.kings:
+			king.reset()
 		self.levels.reset()
 		os.environ["start"] = "1"
 		os.environ["gaming"] = "1"
@@ -84,22 +89,30 @@ class JKGame:
 
 		self.step_counter = 0
 		done = False
-		state = [self.king.levels.current_level, self.king.x, self.king.y, self.king.jumpCount]
+		
+		for king in self.kings:
+			state = [king.levels.current_level, king.x, king.y, king.jumpCount]
 
-		self.visited = {}
-		self.visited[(self.king.levels.current_level, self.king.y)] = 1
+			self.visited = {}
+			self.visited[(king.levels.current_level, king.y)] = 1	
+		
+		# self.king.reset()
+		# state = [self.king.levels.current_level, self.king.x, self.king.y, self.king.jumpCount]
+
+		# self.visited = {}
+		# self.visited[(self.king.levels.current_level, self.king.y)] = 1
 
 		return done, state
 
 	def move_available(self):
-		available = not self.king.isFalling \
-					and not self.king.levels.ending \
-					and (not self.king.isSplat or self.king.splatCount > self.king.splatDuration)
-		return available
+		for king in self.kings:
+			available = not king.isFalling \
+						and not king.levels.ending \
+						and (not king.isSplat or king.splatCount > king.splatDuration)
+			return available
 
 	def step(self, action):
-		old_level = self.king.levels.current_level
-		old_y = self.king.y
+		
 		#old_y = (self.king.levels.max_level - self.king.levels.current_level) * 360 + self.king.y
 		while True:
 			self.clock.tick(self.fps)
@@ -113,26 +126,27 @@ class JKGame:
 			self._update_guistuff()
 			self._update_audio()
 			pygame.display.update()
+			for king in self.kings:
+				old_level = king.levels.current_level
+				old_y = king.y
+				if self.move_available():
+					self.step_counter += 1
+					state = [king.levels.current_level, king.x, king.y, king.jumpCount]
+					##################################################################################################
+					# Define the reward from environment                                                             #
+					##################################################################################################
+					if king.levels.current_level > old_level or (king.levels.current_level == old_level and king.y < old_y):
+						reward = 0
+					else:
+						self.visited[(king.levels.current_level, king.y)] = self.visited.get((king.levels.current_level, king.y), 0) + 1
+						if self.visited[(king.levels.current_level, king.y)] < self.visited[(old_level, old_y)]:
+							self.visited[(king.levels.current_level, king.y)] = self.visited[(old_level, old_y)] + 1
 
+						reward = -self.visited[(king.levels.current_level, king.y)]
+					####################################################################################################
 
-			if self.move_available():
-				self.step_counter += 1
-				state = [self.king.levels.current_level, self.king.x, self.king.y, self.king.jumpCount]
-				##################################################################################################
-				# Define the reward from environment                                                             #
-				##################################################################################################
-				if self.king.levels.current_level > old_level or (self.king.levels.current_level == old_level and self.king.y < old_y):
-					reward = 0
-				else:
-					self.visited[(self.king.levels.current_level, self.king.y)] = self.visited.get((self.king.levels.current_level, self.king.y), 0) + 1
-					if self.visited[(self.king.levels.current_level, self.king.y)] < self.visited[(old_level, old_y)]:
-						self.visited[(self.king.levels.current_level, self.king.y)] = self.visited[(old_level, old_y)] + 1
-
-					reward = -self.visited[(self.king.levels.current_level, self.king.y)]
-				####################################################################################################
-
-				done = True if self.step_counter > self.max_step else False
-				return state, reward, done
+					done = True if self.step_counter > self.max_step else False
+					return state, reward, done
 
 	def running(self):
 		"""
@@ -185,13 +199,13 @@ class JKGame:
 
 	def _update_gamestuff(self, action=None):
 
-		self.levels.update_levels(self.king, self.babe, agentCommand=action)
+		self.levels.update_levels(self.kings, self.babe, agentCommand=action)
 
 	def _update_guistuff(self):
 
-		if self.menus.current_menu:
+		# if self.menus.current_menu:
 
-			self.menus.update()
+		# 	self.menus.update() menu
 
 		if not os.environ["gaming"]:
 
@@ -209,7 +223,8 @@ class JKGame:
 
 		if os.environ["active"]:
 
-			self.king.blitme()
+			for king in self.kings:
+				king.blitme()
 
 		if os.environ["gaming"]:
 
@@ -227,7 +242,7 @@ class JKGame:
 
 			self.start.blitme()
 
-		self.menus.blitme()
+		# self.menus.blitme() menu
 
 		self.screen.blit(pygame.transform.scale(self.game_screen, self.screen.get_size()), (self.game_screen_x, 0))
 
@@ -305,7 +320,7 @@ def train():
 		# 5: 'space',
 	}
 
-	env = JKGame(max_step=1000)
+	env = JKGame(n_kings=4,max_step=1000)
 	num_episode = 3
 	action_keys = list(action_dict.keys())
 
@@ -315,8 +330,6 @@ def train():
 		yourmother = True
 		yourcounter = 0
 		while yourmother:
-			
-
 			action = np.random.choice(action_keys)
 			next_state, reward, done = env.step(action)
 			yourcounter += 1

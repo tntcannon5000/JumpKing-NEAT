@@ -175,7 +175,7 @@ class JKGame:
 		pygame.display.set_icon(pygame.image.load("images\\sheets\\JumpKingIcon.ico"))
 
 		self.levels = Levels(self.game_screen)
-
+		
 		self.king = King(self.game_screen, self.levels)
 
 		self.babe = Babe(self.game_screen, self.levels)
@@ -446,6 +446,7 @@ def train():
 			state = next_state
 		print (f'episode: {i}, reward: {running_reward}')
 
+			
 if __name__ == "__main__":
 	#Game = JKGame()
 	#Game.running()
