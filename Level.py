@@ -202,7 +202,7 @@ class Levels:
 
 			print("BLIT2 ERROR: ", e)
 
-	def update_levels(self, kings, babe, agentCommand=None):
+	def update_levels(self, kings, babe, agentCommand):
 
 		for king in kings:
 			self.update_wind(king)
@@ -224,8 +224,8 @@ class Levels:
 				self.END = self.Ending_Animation.update(self.levels[self.current_level], king, babe)
 
 		else:
-			for king in kings:
-				king.update(agentCommand=agentCommand)
+			for i,king in enumerate(kings):
+				king.update(agentCommand=agentCommand[i])
 
 				babe.update(king)
 

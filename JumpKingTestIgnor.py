@@ -111,7 +111,7 @@ class JKGame:
 						and (not king.isSplat or king.splatCount > king.splatDuration)
 			return available
 
-	def step(self, action):
+	def step(self, actions):
 		
 		#old_y = (self.king.levels.max_level - self.king.levels.current_level) * 360 + self.king.y
 		while True:
@@ -119,8 +119,8 @@ class JKGame:
 			self._check_events()
 			if not os.environ["pause"]:
 				if not self.move_available():
-					action = None
-				self._update_gamestuff(action=action)
+					actions = None
+				self._update_gamestuff(actions=actions)
 
 			self._update_gamescreen()
 			self._update_guistuff()
@@ -197,9 +197,9 @@ class JKGame:
 
 				self._resize_screen(event.w, event.h)
 
-	def _update_gamestuff(self, action=None):
+	def _update_gamestuff(self, actions=None):
 
-		self.levels.update_levels(self.kings, self.babe, agentCommand=action)
+		self.levels.update_levels(self.kings, self.babe, agentCommand=actions)
 
 	def _update_guistuff(self):
 
@@ -330,11 +330,13 @@ def train():
 		yourmother = True
 		yourcounter = 0
 		while yourmother:
-			action = np.random.choice(action_keys)
-			next_state, reward, done = env.step(action)
-			yourcounter += 1
-			if yourcounter > 30:
-				yourmother = False
+			actions = []
+			for i in range(num_episode):
+				actions = actions.append(np.random.choice(action_keys))
+				next_state, reward, done = env.step(actions)
+				yourcounter += 1
+				if yourcounter > 30:
+					yourmother = False
 
 
 if __name__ == "__main__":
