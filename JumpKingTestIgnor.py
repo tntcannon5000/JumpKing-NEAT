@@ -25,6 +25,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import random
 import time
+import neat
 
 
 
@@ -94,7 +95,7 @@ class JKGame:
 			state = [king.levels.current_level, king.x, king.y, king.jumpCount]
 
 			self.visited = {}
-			self.visited[(king.levels.current_level, king.y)] = 1	
+			self.visited[(king.levels.current_level, king.y)] = 1    
 		
 		# self.king.reset()
 		# state = [self.king.levels.current_level, self.king.x, self.king.y, self.king.jumpCount]
@@ -105,10 +106,10 @@ class JKGame:
 		return done, state
 
 	def move_available(self,king):
-		# available = not king.isFalling \
-		# 	and not king.levels.ending \
-		# 	and (not king.isSplat or king.splatCount > king.splatDuration)
-		True
+		available = not king.isFalling \
+		and not king.levels.ending \
+		and (not king.isSplat or king.splatCount > king.splatDuration)
+		return available
 
 	def step(self, actions):
 		
@@ -350,9 +351,10 @@ def train(n_generations):
         # 5: 'space',
     }
 
-    env = JKGame(max_step=1000, n_kings=5)
+    env = JKGame(max_step=1000, n_kings=50)
     env.reset()
     action_keys = list(action_dict.keys())
+
 
     for generation in range(n_generations):
         env.reset()
@@ -365,10 +367,39 @@ def train(n_generations):
                 actions.append(action)
             env.step(actions)
             yourcounter += 1
-            if yourcounter > 30:
+            if yourcounter > 3000:
                 yourmother = False
+#NEAT                
+def get_surrounding_platforms(self, king, level_geometry):
+    zone_of_vision_size = ...  # Determine the appropriate size
+    surrounding_platforms = []
+    for platform in level_geometry:
+        # Calculate relative distances to the king
+        if abs(platform.x - king.x) <= zone_of_vision_size and abs(platform.y - king.y) <= zone_of_vision_size: 
+            surrounding_platforms.append((platform.x - king.x, platform.y - king.y))
+    return surrounding_platforms
+
+def run(config_file):
+	config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                         config_file)
+	p = neat.Population(config)
+
+	# Add a stdout reporter to show progress in the terminal.
+	p.add_reporter(neat.StdOutReporter(True))
+	stats = neat.StatisticsReporter()
+	p.add_reporter(stats)
+	input_nodes = 4
+	for i in input_nodes:
+		p.add_node(neat.NodeGene(key=i, node_type=neat.NodeGene.TYPE_INPUT))
+	
+	output_nodes = 4
+	for i in output_nodes:
+  		p.add_node(neat.NodeGene(key=i + len(input_nodes), node_type=neat.NodeGene.TYPE_OUTPUT))
+
 
 if __name__ == "__main__":
 	#Game = JKGame()
 	#Game.running()
 	train(1)
+	
