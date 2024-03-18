@@ -104,12 +104,11 @@ class JKGame:
 
 		return done, state
 
-	def move_available(self):
-		for king in self.kings:
-			available = not king.isFalling \
-						and not king.levels.ending \
-						and (not king.isSplat or king.splatCount > king.splatDuration)
-			return available
+	def move_available(self,king):
+		# available = not king.isFalling \
+		# 	and not king.levels.ending \
+		# 	and (not king.isSplat or king.splatCount > king.splatDuration)
+		True
 
 	def step(self, actions):
 		
@@ -118,9 +117,10 @@ class JKGame:
 			self.clock.tick(self.fps)
 			self._check_events()
 			if not os.environ["pause"]:
-				if not self.move_available():
-					actions = None
-				self._update_gamestuff(actions=actions)
+				for king in self.kings:
+					if not self.move_available(king):
+						actions = None
+					self._update_gamestuff(actions=actions)
 
 			self._update_gamescreen()
 			self._update_guistuff()
@@ -129,7 +129,7 @@ class JKGame:
 			for king in self.kings:
 				old_level = king.levels.current_level
 				old_y = king.y
-				if self.move_available():
+				if self.move_available(king):
 					self.step_counter += 1
 					state = [king.levels.current_level, king.x, king.y, king.jumpCount]
 					##################################################################################################
@@ -339,7 +339,36 @@ def train():
 					yourmother = False
 
 
+def train(n_generations):
+
+    action_dict = {
+        0: 'right',
+        1: 'left',
+        2: 'right+space',
+        3: 'left+space',
+        # 4: 'idle',
+        # 5: 'space',
+    }
+
+    env = JKGame(max_step=1000, n_kings=5)
+    env.reset()
+    action_keys = list(action_dict.keys())
+
+    for generation in range(n_generations):
+        env.reset()
+        yourmother = True
+        yourcounter = 0
+        while yourmother:
+            actions = []
+            for king in env.kings:
+                action = np.random.choice(action_keys)
+                actions.append(action)
+            env.step(actions)
+            yourcounter += 1
+            if yourcounter > 30:
+                yourmother = False
+
 if __name__ == "__main__":
 	#Game = JKGame()
 	#Game.running()
-	train()
+	train(1)

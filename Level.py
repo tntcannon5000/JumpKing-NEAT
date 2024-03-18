@@ -225,8 +225,8 @@ class Levels:
 
 		else:
 			for i,king in enumerate(kings):
-				king.update(agentCommand=agentCommand[i])
-
+				if agentCommand is not None:
+					king.update(agentCommand=agentCommand[i])
 				babe.update(king)
 
 	def update_flyers(self, king):
