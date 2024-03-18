@@ -25,6 +25,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import random
 import time
+import neat
 
 
 
@@ -104,12 +105,11 @@ class JKGame:
 
 		return done, state
 
-	def move_available(self):
-		for king in self.kings:
-			available = not king.isFalling \
-						and not king.levels.ending \
-						and (not king.isSplat or king.splatCount > king.splatDuration)
-			return available
+	def move_available(self, king):
+		available = not king.isFalling \
+				and not king.levels.ending \
+				and (not king.isSplat or king.splatCount > king.splatDuration)
+		return available
 
 	def step(self, actions):
 		
@@ -118,8 +118,11 @@ class JKGame:
 			self.clock.tick(self.fps)
 			self._check_events()
 			if not os.environ["pause"]:
-				if not self.move_available():
-					actions = None
+				
+				for i, king in enumerate(self.kings):
+					if not self.move_available(king):
+						actions[i] = None
+
 				self._update_gamestuff(actions=actions)
 
 			self._update_gamescreen()
@@ -129,7 +132,7 @@ class JKGame:
 			for king in self.kings:
 				old_level = king.levels.current_level
 				old_y = king.y
-				if self.move_available():
+				if self.move_available(king):
 					self.step_counter += 1
 					state = [king.levels.current_level, king.x, king.y, king.jumpCount]
 					##################################################################################################
@@ -348,9 +351,10 @@ def train(n_generations):
         # 5: 'space',
     }
 
-    env = JKGame(max_step=1000, n_kings=5)
+    env = JKGame(max_step=1000, n_kings=50)
     env.reset()
     action_keys = list(action_dict.keys())
+
 
     for generation in range(n_generations):
         env.reset()
@@ -363,10 +367,30 @@ def train(n_generations):
                 actions.append(action)
             env.step(actions)
             yourcounter += 1
-            if yourcounter > 30:
+            if yourcounter > 3000:
                 yourmother = False
+
+def run(config_file):
+	config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                         config_file)
+	p = neat.Population(config)
+
+	# Add a stdout reporter to show progress in the terminal.
+	p.add_reporter(neat.StdOutReporter(True))
+	stats = neat.StatisticsReporter()
+	p.add_reporter(stats)
+	input_nodes = 4
+	for i in input_nodes:
+		p.add_node(neat.NodeGene(key=i, node_type=neat.NodeGene.TYPE_INPUT))
+	
+	output_nodes = 4
+	for i in output_nodes:
+  		p.add_node(neat.NodeGene(key=i + len(input_nodes), node_type=neat.NodeGene.TYPE_OUTPUT))
+
 
 if __name__ == "__main__":
 	#Game = JKGame()
 	#Game.running()
 	train(1)
+	
