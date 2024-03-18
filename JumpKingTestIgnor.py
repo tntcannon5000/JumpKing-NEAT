@@ -379,24 +379,6 @@ def train(n_generations):
             if yourcounter > 3000:
                 yourmother = False
 
-def run(config_file):
-	config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
-                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                         config_file)
-	p = neat.Population(config)
-
-	# Add a stdout reporter to show progress in the terminal.
-	p.add_reporter(neat.StdOutReporter(True))
-	stats = neat.StatisticsReporter()
-	p.add_reporter(stats)
-	input_nodes = 4
-	for i in input_nodes:
-		p.add_node(neat.NodeGene(key=i, node_type=neat.NodeGene.TYPE_INPUT))
-	
-	output_nodes = 4
-	for i in output_nodes:
-  		p.add_node(neat.NodeGene(key=i + len(input_nodes), node_type=neat.NodeGene.TYPE_OUTPUT))
-
 
 if __name__ == "__main__":
 	#Game = JKGame()
