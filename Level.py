@@ -224,10 +224,13 @@ class Levels:
 				self.END = self.Ending_Animation.update(self.levels[self.current_level], king, babe)
 
 		else:
-			for i,king in enumerate(kings):
+			for index, king in enumerate(kings):
+				
 				if agentCommand is not None:
-					king.update(agentCommand=agentCommand[i])
+					king.update(agentCommand=agentCommand[index])
+
 				babe.update(king)
+
 
 	def update_flyers(self, king):
 

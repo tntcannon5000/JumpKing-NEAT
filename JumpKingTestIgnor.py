@@ -76,6 +76,16 @@ class JKGame:
 
 		pygame.display.set_caption('Jump King At Home XD')
 
+    	# NEAT Initialization       
+		self.config_file = 'config-feedforward.txt'  
+		self.config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                                  neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                                  self.config_file)
+		self.population = neat.Population(self.config)
+		self.population.add_reporter(neat.StdOutReporter(True))
+		self.stats = neat.StatisticsReporter()
+		self.population.add_reporter(self.stats)
+
 	def reset(self):
 		
 		for king in self.kings:
@@ -118,10 +128,12 @@ class JKGame:
 			self.clock.tick(self.fps)
 			self._check_events()
 			if not os.environ["pause"]:
-				for king in self.kings:
+				
+				for i, king in enumerate(self.kings):
 					if not self.move_available(king):
-						actions = None
-					self._update_gamestuff(actions=actions)
+						actions[i] = None
+
+				self._update_gamestuff(actions=actions)
 
 			self._update_gamescreen()
 			self._update_guistuff()
@@ -308,37 +320,34 @@ class JKGame:
 					continue
 
 			pygame.mixer.Channel(channel).set_volume(float(os.environ.get("volume")))
+   
+   	#NEAT                
+	def get_surrounding_platforms(self, king, level_geometry):
+		zone_of_vision_size = ...  # Determine the appropriate size
+		surrounding_platforms = []
+		for platform in level_geometry:
+			# Calculate relative distances to the king
+			if abs(platform.x - king.x) <= zone_of_vision_size and abs(platform.y - king.y) <= zone_of_vision_size: 
+				surrounding_platforms.append((platform.x - king.x, platform.y - king.y))
+		return surrounding_platforms
 
+	def create_network(self, genome, config):
+        # ... (The network structure we discussed earlier) ...
+        # Example input/output structure
+		num_inputs = len(get_surrounding_platforms(self, king, level_geometry)) + 4  # Adjust based on your input function
+		num_outputs = 3  # Left/right, jump, jump duration
+        # ... (Add hidden nodes as desired) ...        
+		return neat.nn.FeedForwardNetwork.create(genome, config)
 
-def train():
+	def eval_genomes(self, genomes, config):
+        # ... Your main game loop logic ...
 
-	action_dict = {
-		0: 'right',
-		1: 'left',
-		2: 'right+space',
-		3: 'left+space',
-		# 4: 'idle',
-		# 5: 'space',
-	}
+		for _, genome in genomes: # Assuming your genomes have an ID
+			king = self.get_king_by_id(genome.key) # Assuming you can retrieve the king by ID
+			genome.fitness = calculate_reward(king.y, king.y_old, king.fell) 
 
-	env = JKGame(n_kings=4,max_step=1000)
-	num_episode = 3
-	action_keys = list(action_dict.keys())
-
-
-	for i in range(num_episode):
-		done, state = env.reset()
-		yourmother = True
-		yourcounter = 0
-		while yourmother:
-			actions = []
-			for i in range(num_episode):
-				actions = actions.append(np.random.choice(action_keys))
-				next_state, reward, done = env.step(actions)
-				yourcounter += 1
-				if yourcounter > 30:
-					yourmother = False
-
+	def run_neat(self):
+		winner = self.population.run(self.eval_genomes, n=50)
 
 def train(n_generations):
 
@@ -369,15 +378,6 @@ def train(n_generations):
             yourcounter += 1
             if yourcounter > 3000:
                 yourmother = False
-#NEAT                
-def get_surrounding_platforms(self, king, level_geometry):
-    zone_of_vision_size = ...  # Determine the appropriate size
-    surrounding_platforms = []
-    for platform in level_geometry:
-        # Calculate relative distances to the king
-        if abs(platform.x - king.x) <= zone_of_vision_size and abs(platform.y - king.y) <= zone_of_vision_size: 
-            surrounding_platforms.append((platform.x - king.x, platform.y - king.y))
-    return surrounding_platforms
 
 def run(config_file):
 	config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
