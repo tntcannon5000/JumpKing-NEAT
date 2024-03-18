@@ -386,7 +386,7 @@ def eval_genomes(genomes, config):
 		3: 'left+space',
 		#4: 'idle',
 		# 5: 'space',
-	}		
+	}        
 
 	env = JKGame(max_step=1000, n_kings=50)
 	env.reset()
@@ -405,13 +405,16 @@ def eval_genomes(genomes, config):
 	# Actually doing some training
 	yourmother = True
 	yourcounter = 0
+	previous_actions = [0] * len(env.kings)
 	while yourmother:
 		actions = []
 		for index, king in enumerate(env.kings):
-			output = nets[env.kings.index(king)].activate((king.levels.current_level, king.x, king.y, king.jumpCount))
+			inputs = (king.levels.current_level, king.x, king.y, king.jumpCount, previous_actions[index])
+			output = nets[env.kings.index(king)].activate(inputs)
 			action = output.index(max(output))
 			print(action)
 			actions.append(action)
+			previous_actions[index] = action
 		env.step(actions)
 		yourcounter += 1
 		if yourcounter > 200:
