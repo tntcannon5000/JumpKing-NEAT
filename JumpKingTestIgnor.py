@@ -312,34 +312,6 @@ class JKGame:
 			pygame.mixer.Channel(channel).set_volume(float(os.environ.get("volume")))
 
 
-def train():
-
-	action_dict = {
-		0: 'right',
-		1: 'left',
-		2: 'right+space',
-		3: 'left+space',
-		# 4: 'idle',
-		# 5: 'space',
-	}
-
-	env = JKGame(n_kings=4,max_step=1000)
-	num_episode = 3
-	action_keys = list(action_dict.keys())
-
-
-	for i in range(num_episode):
-		done, state = env.reset()
-		yourmother = True
-		yourcounter = 0
-		while yourmother:
-			action = np.random.choice(action_keys)
-			next_state, reward, done = env.step(action)
-			yourcounter += 1
-			if yourcounter > 30:
-				yourmother = False
-
-
 def train(n_generations):
 
     action_dict = {
@@ -347,7 +319,7 @@ def train(n_generations):
         1: 'left',
         2: 'right+space',
         3: 'left+space',
-        # 4: 'idle',
+        4: 'idle',
         # 5: 'space',
     }
 
@@ -370,6 +342,72 @@ def train(n_generations):
             if yourcounter > 3000:
                 yourmother = False
 
+def train_minimalist():
+    action_dict = {
+        0: 'right',
+        1: 'left',
+        2: 'right+space',
+        3: 'left+space',
+        4: 'idle',
+        # 5: 'space',
+    }
+    env = JKGame(max_step=1000, n_kings=50)
+    env.reset()
+    action_keys = list(action_dict.keys())
+
+    yourmother = True
+    yourcounter = 0
+    while yourmother:
+        actions = []
+        for king in env.kings:
+            action = np.random.choice(action_keys)
+            actions.append(action)
+        env.step(actions)
+        yourcounter += 1
+        if yourcounter > 3000:
+            yourmother = False
+
+def eval_genomes(genomes, config):
+	# Environment Preparation
+	action_dict = {
+		0: 'right',
+		1: 'left',
+		2: 'right+space',
+		3: 'left+space',
+		#4: 'idle',
+		# 5: 'space',
+	}		
+
+	env = JKGame(max_step=1000, n_kings=50)
+	env.reset()
+	action_keys = list(action_dict.keys())
+
+	nets = []
+	ge = []
+	for genome_id, genome in genomes:
+		print(type(genome))
+		print()
+		genome.fitness = 0  # start with fitness level of 0
+		net = neat.nn.FeedForwardNetwork.create(genome, config)
+		nets.append(net)
+		ge.append(genome)
+
+	# Actually doing some training
+	yourmother = True
+	yourcounter = 0
+	while yourmother:
+		actions = []
+		for index, king in enumerate(env.kings):
+			output = nets[env.kings.index(king)].activate((king.levels.current_level, king.x, king.y, king.jumpCount))
+			action = output.index(max(output))
+			print(action)
+			actions.append(action)
+		env.step(actions)
+		yourcounter += 1
+		if yourcounter > 200:
+			yourmother = False
+
+
 def run(config_file):
 	config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
@@ -380,17 +418,11 @@ def run(config_file):
 	p.add_reporter(neat.StdOutReporter(True))
 	stats = neat.StatisticsReporter()
 	p.add_reporter(stats)
-	input_nodes = 4
-	for i in input_nodes:
-		p.add_node(neat.NodeGene(key=i, node_type=neat.NodeGene.TYPE_INPUT))
 	
-	output_nodes = 4
-	for i in output_nodes:
-  		p.add_node(neat.NodeGene(key=i + len(input_nodes), node_type=neat.NodeGene.TYPE_OUTPUT))
-
+	winner = p.run(eval_genomes, 50)
 
 if __name__ == "__main__":
 	#Game = JKGame()
 	#Game.running()
-	train(1)
-	
+	#train(1)
+	run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
