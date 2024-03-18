@@ -320,34 +320,7 @@ class JKGame:
 					continue
 
 			pygame.mixer.Channel(channel).set_volume(float(os.environ.get("volume")))
-   
-   	#NEAT                
-	def get_surrounding_platforms(self, king, level_geometry):
-		zone_of_vision_size = ...  # Determine the appropriate size
-		surrounding_platforms = []
-		for platform in level_geometry:
-			# Calculate relative distances to the king
-			if abs(platform.x - king.x) <= zone_of_vision_size and abs(platform.y - king.y) <= zone_of_vision_size: 
-				surrounding_platforms.append((platform.x - king.x, platform.y - king.y))
-		return surrounding_platforms
 
-	def create_network(self, genome, config):
-        # ... (The network structure we discussed earlier) ...
-        # Example input/output structure
-		num_inputs = len(get_surrounding_platforms(self, king, level_geometry)) + 4  # Adjust based on your input function
-		num_outputs = 3  # Left/right, jump, jump duration
-        # ... (Add hidden nodes as desired) ...        
-		return neat.nn.FeedForwardNetwork.create(genome, config)
-
-	def eval_genomes(self, genomes, config):
-        # ... Your main game loop logic ...
-
-		for _, genome in genomes: # Assuming your genomes have an ID
-			king = self.get_king_by_id(genome.key) # Assuming you can retrieve the king by ID
-			genome.fitness = calculate_reward(king.y, king.y_old, king.fell) 
-
-	def run_neat(self):
-		winner = self.population.run(self.eval_genomes, n=50)
 
 def train(n_generations):
 
@@ -356,7 +329,7 @@ def train(n_generations):
         1: 'left',
         2: 'right+space',
         3: 'left+space',
-        # 4: 'idle',
+        4: 'idle',
         # 5: 'space',
     }
 
@@ -379,9 +352,87 @@ def train(n_generations):
             if yourcounter > 3000:
                 yourmother = False
 
+def train_minimalist():
+    action_dict = {
+        0: 'right',
+        1: 'left',
+        2: 'right+space',
+        3: 'left+space',
+        4: 'idle',
+        # 5: 'space',
+    }
+    env = JKGame(max_step=1000, n_kings=50)
+    env.reset()
+    action_keys = list(action_dict.keys())
+
+    yourmother = True
+    yourcounter = 0
+    while yourmother:
+        actions = []
+        for king in env.kings:
+            action = np.random.choice(action_keys)
+            actions.append(action)
+        env.step(actions)
+        yourcounter += 1
+        if yourcounter > 3000:
+            yourmother = False
+
+def eval_genomes(genomes, config):
+	# Environment Preparation
+	action_dict = {
+		0: 'right',
+		1: 'left',
+		2: 'right+space',
+		3: 'left+space',
+		#4: 'idle',
+		# 5: 'space',
+	}		
+
+	env = JKGame(max_step=1000, n_kings=50)
+	env.reset()
+	action_keys = list(action_dict.keys())
+
+	nets = []
+	ge = []
+	for genome_id, genome in genomes:
+		print(type(genome))
+		print()
+		genome.fitness = 0  # start with fitness level of 0
+		net = neat.nn.FeedForwardNetwork.create(genome, config)
+		nets.append(net)
+		ge.append(genome)
+
+	# Actually doing some training
+	yourmother = True
+	yourcounter = 0
+	while yourmother:
+		actions = []
+		for index, king in enumerate(env.kings):
+			output = nets[env.kings.index(king)].activate((king.levels.current_level, king.x, king.y, king.jumpCount))
+			action = output.index(max(output))
+			print(action)
+			actions.append(action)
+		env.step(actions)
+		yourcounter += 1
+		if yourcounter > 200:
+			yourmother = False
+
+
+def run(config_file):
+	config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                         config_file)
+	p = neat.Population(config)
+
+	# Add a stdout reporter to show progress in the terminal.
+	p.add_reporter(neat.StdOutReporter(True))
+	stats = neat.StatisticsReporter()
+	p.add_reporter(stats)
+	
+	winner = p.run(eval_genomes, 50)
 
 if __name__ == "__main__":
 	#Game = JKGame()
 	#Game.running()
-	train(1)
-	
+	#train(1)
+	run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
