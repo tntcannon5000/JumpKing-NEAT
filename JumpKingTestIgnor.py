@@ -129,11 +129,14 @@ class JKGame:
 			self._update_guistuff()
 			self._update_audio()
 			pygame.display.update()
+			
 			for king in self.kings:
 				old_level = king.levels.current_level
 				old_y = king.y
 
-				print(king.levels.current_level)
+				if king.y < 297:
+					print("max y: " + str(king.y))
+
 				if king.y < king.maxy:
 					king.update_max_y(king.y)
 
@@ -338,7 +341,7 @@ def eval_genomes(genomes, config):
 		# 5: 'space',
 	}        
 
-	env = JKGame(max_step=1000, n_kings=10)
+	env = JKGame(max_step=1000, n_kings=250)
 	env.reset()
 	action_keys = list(action_dict.keys())
 
@@ -361,8 +364,8 @@ def eval_genomes(genomes, config):
 			#inputs = surrounding_platforms + king_state
 			#print('inputs : '+str(inputs))
 			output = nets[env.kings.index(king)].activate(king_state)
-			if king.maxy < 297 or king.maxy > 300:
-				print(king.maxy)
+			# if king.maxy < 297 or king.maxy > 300:
+			# 	print(king.maxy)
 			action = output.index(max(output))
 			actions.append(action)
 			previous_actions[index] = action
@@ -375,6 +378,8 @@ def eval_genomes(genomes, config):
 			yourmother = False
 	
 		
+# To do fix stupid while loop into for loop
+# To do, set list of ALL platforms as input, and then correlate with king.levels.current_level and thenpray it fucking work
 
 
 def run(config_file):
