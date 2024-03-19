@@ -348,8 +348,9 @@ def eval_genomes(genomes, config):
 		for index, king in enumerate(env.kings):
 			surrounding_platforms = get_surrounding_platforms(env, king) 
 			king_state = [king.levels.current_level, king.x, king.y, king.jumpCount, previous_actions[index]]
-			inputs = surrounding_platforms + king_state
+			inputs = [surrounding_platforms] + king_state
 			print('inputs : '+str(inputs))
+			print("surrounding platforms: " + str(surrounding_platforms))
 			output = nets[env.kings.index(king)].activate(inputs)
 			action = output.index(max(output))
 			print(action)
@@ -363,9 +364,7 @@ def eval_genomes(genomes, config):
 
 
 def run(config_file):
-	config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
-                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                         config_file)
+	config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_file)
 	p = neat.Population(config)
 
 	# Add a stdout reporter to show progress in the terminal.

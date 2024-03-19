@@ -329,7 +329,7 @@ class King():
 					self.idle_counter = 0
 
 					if self.jumpCount < self.maxJumpCount:
-						if self.jumpCount < self.maxJumpCount:
+
 						self.jumpCount += 1
 
 					if not self.isCrouch:
