@@ -138,6 +138,8 @@ class King():
 
 		self.x, self.y = 230, 298
 
+		self.maxy = self.y
+
 		self.width, self.height = 32, 32
 
 		self.rect_x, self.rect_y = self.x + 1, self.y + 7
@@ -403,6 +405,9 @@ class King():
 			self.isLookUp = False
 			self.isDance = False
 			self.danceCount = 0
+
+	def update_max_y(self, newy):
+		self.maxy = newy
 
 	def _collide_right(self, platform):
 

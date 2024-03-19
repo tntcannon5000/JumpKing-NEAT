@@ -118,7 +118,11 @@ class JKGame:
 			self.clock.tick(self.fps)
 			self._check_events()
 			if not os.environ["pause"]:
-				actions = None
+				
+				for i, king in enumerate(self.kings):
+					if not self.move_available(king):
+						actions[i] = None
+
 				self._update_gamestuff(actions=actions)
 
 			self._update_gamescreen()
@@ -128,19 +132,29 @@ class JKGame:
 			for king in self.kings:
 				old_level = king.levels.current_level
 				old_y = king.y
+
+				print(king.levels.current_level)
+				if king.y < king.maxy:
+					king.update_max_y(king.y)
+
 				if self.move_available(king):
-					reward = 0
-					if king.y < old_y:  # Significant reward for moving upward
-						reward = 2
-					elif king.levels.current_level > old_level:  # Smaller reward for level progression
-						reward = 5 
+					self.step_counter += 1
+					state = [king.levels.current_level, king.x, king.y, king.jumpCount]
+					##################################################################################################
+					# Define the reward from environment                                                             #
+					##################################################################################################
+					if king.levels.current_level > old_level or (king.levels.current_level == old_level and king.y < old_y):
+						reward = 0
+					else:
+						self.visited[(king.levels.current_level, king.y)] = self.visited.get((king.levels.current_level, king.y), 0) + 1
+						if self.visited[(king.levels.current_level, king.y)] < self.visited[(old_level, old_y)]:
+							self.visited[(king.levels.current_level, king.y)] = self.visited[(old_level, old_y)] + 1
 
-         		# Penalty for getting stuck (and revisiting areas)
-				self.visited[(king.levels.current_level, king.y)] = self.visited.get((king.levels.current_level, king.y), 0) + 1
-				reward -= self.visited[(king.levels.current_level, king.y)] * 0.1  
+						reward = -self.visited[(king.levels.current_level, king.y)]
+					####################################################################################################
 
-				#done = True if self.step_counter > self.max_step else False
-				return  reward
+					done = True if self.step_counter > self.max_step else False
+					return state, reward, done
 
 	def running(self):
 		"""
@@ -324,19 +338,16 @@ def eval_genomes(genomes, config):
 		# 5: 'space',
 	}        
 
-	env = JKGame(max_step=1000, n_kings=50)
+	env = JKGame(max_step=1000, n_kings=10)
 	env.reset()
 	action_keys = list(action_dict.keys())
 
 	nets = []
-	ge = []
 	for genome_id, genome in genomes:
-		print(type(genome))
-		print()
+		#print(type(genome))
 		genome.fitness = 0  # start with fitness level of 0
 		net = neat.nn.FeedForwardNetwork.create(genome, config)
 		nets.append(net)
-		ge.append(genome)
 
 	# Actually doing some training
 	yourmother = True
@@ -345,20 +356,25 @@ def eval_genomes(genomes, config):
 	while yourmother:
 		actions = []
 		for index, king in enumerate(env.kings):
-			surrounding_platforms = get_surrounding_platforms(env, king) 
+			#surrounding_platforms = get_surrounding_platforms(env, king) 
 			king_state = [king.levels.current_level, king.x, king.y, king.jumpCount, previous_actions[index]]
-			inputs = surrounding_platforms + king_state
-			print('inputs : '+str(inputs))
-			output = nets[env.kings.index(king)].activate(inputs)
+			#inputs = surrounding_platforms + king_state
+			#print('inputs : '+str(inputs))
+			output = nets[env.kings.index(king)].activate(king_state)
+			if king.maxy < 297 or king.maxy > 300:
+				print(king.maxy)
 			action = output.index(max(output))
-			print(action)
-			reward = env.step(action) 
-			ge[index].fitness += reward
 			actions.append(action)
 			previous_actions[index] = action
+		#genome[index].fitness += reward
+		reward = env.step(actions)
 		yourcounter += 1
-		if yourcounter > 200:
+		if yourcounter > 500:
+			for index, genome in enumerate(genomes):
+				genome[1].fitness = 300-env.kings[index].maxy
 			yourmother = False
+	
+		
 
 
 def run(config_file):
