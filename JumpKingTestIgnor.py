@@ -109,7 +109,7 @@ class JKGame:
 			available = not king.isFalling \
 						and not king.levels.ending \
 						and (not king.isSplat or king.splatCount > king.splatDuration)
-			return available
+			return True
 
 	def step(self, actions):
 		
@@ -363,7 +363,7 @@ def train(n_generations):
                 actions.append(action)
             env.step(actions)
             yourcounter += 1
-            if yourcounter > 30:
+            if yourcounter > 3000:
                 yourmother = False
 
 if __name__ == "__main__":
