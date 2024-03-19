@@ -134,7 +134,6 @@ class JKGame:
 				old_level = king.levels.current_level
 				old_y = king.y
 
-				print(king.levels.current_level)
 				if king.y < king.maxy:
 					king.update_max_y(king.y)
 
@@ -233,6 +232,9 @@ class JKGame:
 		if os.environ["active"]:
 
 			for king in self.kings:
+				if king.y < king.maxy:
+					#print("previous best: " + str(king.maxy) + " new best: " + str(king.y))
+					king.maxy = king.y
 				king.blitme()
 
 		if os.environ["gaming"]:
@@ -339,7 +341,7 @@ def eval_genomes(genomes, config):
 		# 5: 'space',
 	}        
 
-	env = JKGame(max_step=1000, n_kings=10)
+	env = JKGame(max_step=1000, n_kings=150)
 	env.reset()
 	action_keys = list(action_dict.keys())
 
@@ -362,8 +364,6 @@ def eval_genomes(genomes, config):
 			#inputs = surrounding_platforms + king_state
 			#print('inputs : '+str(inputs))
 			output = nets[env.kings.index(king)].activate(king_state)
-			if king.maxy < 297 or king.maxy > 300:
-				print(king.maxy)
 			action = output.index(max(output))
 			actions.append(action)
 			previous_actions[index] = action
@@ -373,6 +373,7 @@ def eval_genomes(genomes, config):
 		if yourcounter > 500:
 			for index, genome in enumerate(genomes):
 				genome[1].fitness = 300-env.kings[index].maxy
+				print(genome)
 			yourmother = False
 	
 		
