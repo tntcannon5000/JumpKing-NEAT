@@ -130,6 +130,7 @@ class JKGame:
 		while True:
 			self.clock.tick(self.fps)
 			self._check_events()
+   			
 			if not os.environ["pause"]:
 				
 				for i, king in enumerate(self.kings):
@@ -137,7 +138,7 @@ class JKGame:
 						actions[i] = None
 
 				self._update_gamestuff(actions=actions)
-
+			
 			self._update_gamescreen()
 			self._update_guistuff()
 			self._update_audio()
@@ -146,13 +147,9 @@ class JKGame:
 			for index,king in enumerate(self.kings):
 				old_level = king.levels.current_level
 				old_y = king.y
-
-				if king.y < king.maxy:
-					king.update_max_y(king.y)
-					reward[index]+= 0.1
-
 				if self.move_available(king):
-					self.step_counter += 1
+					
+					#self.step_counter += 1
 					##################################################################################################
 					# Define the reward from environment                                                             #
 					##################################################################################################
@@ -163,8 +160,18 @@ class JKGame:
 						if self.visited[(king.levels.current_level, king.y)] < self.visited[(old_level, old_y)]:
 							self.visited[(king.levels.current_level, king.y)] = self.visited[(old_level, old_y)] + 1
 
-						reward[index]+= -self.visited[(king.levels.current_level, king.y)]* 0.1 
+						#king.reward+= -self.visited[(king.levels.current_level, king.y)]* 0.1 
 					####################################################################################################
+					if king.maxy < king.y:
+						king.update_max_y(king.y)
+						king.reward+= 0.1
+					if king.levels.current_level == old_level and king.y < old_y:
+						king.reward+=0.5
+					if king.levels.current_level > old_level:
+						king.reward+=1
+					if king.maxy == old_y: #penalize for staying on the same vertical spot i.e not jumping
+						king.reward+= -0.1
+
 			return reward
 
 	
@@ -243,18 +250,7 @@ class JKGame:
 			self.levels.blit1()
 
 		if os.environ["active"]:
-
 			for king in self.kings:
-				old_level = king.levels.current_level
-				old_y = king.y
-				if king.levels.current_level > old_level or (king.levels.current_level == old_level and king.y < old_y):
-					king.reward = 0
-				else:
-					self.visited[(king.levels.current_level, king.y)] = self.visited.get((king.levels.current_level, king.y), 0) + 1
-					if self.visited[(king.levels.current_level, king.y)] < self.visited[(old_level, old_y)]:
-						self.visited[(king.levels.current_level, king.y)] = self.visited[(old_level, old_y)] + 1
-
-					king.reward = -self.visited[(king.levels.current_level, king.y)]
 				king.blitme()
 
 		if os.environ["gaming"]:
@@ -340,20 +336,19 @@ class JKGame:
 			pygame.mixer.Channel(channel).set_volume(float(os.environ.get("volume")))
 
 def get_surrounding_platforms(env, king):
-	zone_of_vision_size = 150  # Adjust as needed
+	zone_of_vision_size = 100  # Adjust as needed
 	surrounding_platforms = []
 	MAX_PLATFORM_LEVELS = 40
 	for platform in env.levels.levels[env.levels.current_level].platforms: 
 		# Calculate relative distances to the king
-		relative_x = platform.x - king.x
-		relative_y = platform.y - king.y 
+		relative_x = (platform.x - king.x)#/472
+		relative_y = (platform.y - king.y)#/344
 		if abs(relative_x) <= zone_of_vision_size and abs(relative_y) <= zone_of_vision_size: 
-			surrounding_platforms.append((relative_x, relative_y,platform.width,platform.height))
+			surrounding_platforms.append((relative_x, relative_y))
 
 	# Pad out the surrounding_platforms list with Max_platform_levels - len(surrounding_platforms) values
-	surrounding_platforms += [(-1, -1,-1,-1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
+	surrounding_platforms += [(-1,-1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
 	return surrounding_platforms
-	
 
 def eval_genomes(genomes, config):
 	# Environment Preparation
@@ -363,7 +358,7 @@ def eval_genomes(genomes, config):
 		2: 'right+space',
 		3: 'left+space',
 		#4: 'idle',
-		# 5: 'space',
+		#5: 'space',
 	}        
 
 	env = JKGame(max_step=1000, n_kings=config.pop_size)
@@ -384,7 +379,7 @@ def eval_genomes(genomes, config):
 		actions = []
 		for index, king in enumerate(env.kings):
 			surrounding_platforms = [item for sublist in get_surrounding_platforms(env, king) for item in sublist]
-			king_state = [king.levels.current_level, king.x, king.y, king.jumpCount, previous_actions[index]]
+			king_state = [king.levels.current_level, king.jumpCount, previous_actions[index]]
 			inputs = surrounding_platforms + king_state
 			#print('inputs : '+str(inputs))
 			output = nets[env.kings.index(king)].activate(inputs)
@@ -392,12 +387,12 @@ def eval_genomes(genomes, config):
 			actions.append(action)
 			previous_actions[index] = action
 		#genome[index].fitness += reward
-		reward = env.step(actions)
-		yourcounter += 1
-		if yourcounter > 500:
-			for index, genome in enumerate(genomes):
-				genome[1].fitness = env.kings[index].reward
-			yourmother = False
+		rewards = env.step(actions)
+
+		for index, genome in enumerate(genomes):
+			#genome[1].fitness = 300-env.kings[index].maxy
+   			genome[1].fitness = env.kings[index].reward
+			#genome[1].fitness = env.kings[index].reward
 	
 		
 
