@@ -245,9 +245,16 @@ class JKGame:
 		if os.environ["active"]:
 
 			for king in self.kings:
-				if king.y < king.maxy:
-					#print("previous best: " + str(king.maxy) + " new best: " + str(king.y))
-					king.maxy = king.y
+				old_level = king.levels.current_level
+				old_y = king.y
+				if king.levels.current_level > old_level or (king.levels.current_level == old_level and king.y < old_y):
+					king.reward = 0
+				else:
+					self.visited[(king.levels.current_level, king.y)] = self.visited.get((king.levels.current_level, king.y), 0) + 1
+					if self.visited[(king.levels.current_level, king.y)] < self.visited[(old_level, old_y)]:
+						self.visited[(king.levels.current_level, king.y)] = self.visited[(old_level, old_y)] + 1
+
+					king.reward = -self.visited[(king.levels.current_level, king.y)]
 				king.blitme()
 
 		if os.environ["gaming"]:
@@ -350,6 +357,15 @@ def get_surrounding_platforms(env, king):
 
 def eval_genomes(genomes, config):
 	# Environment Preparation
+	action_dict = {
+		0: 'right',
+		1: 'left',
+		2: 'right+space',
+		3: 'left+space',
+		#4: 'idle',
+		# 5: 'space',
+	}        
+
 	env = JKGame(max_step=1000, n_kings=config.pop_size)
 	env.reset()
 
@@ -377,14 +393,13 @@ def eval_genomes(genomes, config):
 			previous_actions[index] = action
 		#genome[index].fitness += reward
 		reward = env.step(actions)
-
-	for index, genome in enumerate(genomes):
-		#genome[1].fitness = 300-env.kings[index].maxy if genome[1].fitness != 0 else 0
-		genome[1].fitness = 300-env.kings[index].maxy
-		print(genome)
-
-# To do fix stupid while loop into for loop
-# To do, set list of ALL platforms as input, and then correlate with king.levels.current_level and thenpray it fucking work
+		yourcounter += 1
+		if yourcounter > 500:
+			for index, genome in enumerate(genomes):
+				genome[1].fitness = env.kings[index].reward
+			yourmother = False
+	
+		
 
 
 def run(config_file):
@@ -396,7 +411,7 @@ def run(config_file):
 	stats = neat.StatisticsReporter()
 	p.add_reporter(stats)
 	
-	winner = p.run(eval_genomes, 50)
+	winner = p.run(eval_genomes, 100)
 
 if __name__ == "__main__":
 	#Game = JKGame()
