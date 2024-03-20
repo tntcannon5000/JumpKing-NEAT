@@ -41,7 +41,7 @@ class JKGame:
 		self.clock = pygame.time.Clock()
 
 		self.fps = int(os.environ.get("fps"))
- 
+
 		self.bg_color = (0, 0, 0)
 
 		self.screen = pygame.display.set_mode((int(os.environ.get("screen_width")) * int(os.environ.get("window_scale")), int(os.environ.get("screen_height")) * int(os.environ.get("window_scale"))), pygame.HWSURFACE|pygame.DOUBLEBUF)#|pygame.SRCALPHA)
@@ -53,7 +53,7 @@ class JKGame:
 		
 		self.game_screen_x = 0
 
-		pygame.display.set_icon(pygame.image.load("images\\sheets\\JumpKingIcon.ico"))
+		pygame.display.set_icon(pygame.image.load("images/sheets/JumpKingIcon.ico"))
 
 		self.levels = Levels(self.game_screen)
 
@@ -69,6 +69,18 @@ class JKGame:
 
 		#self.start = Start(self.game_screen, self.menus)
 
+		self.action_dict = {
+		0: 'right',
+		1: 'left',
+		2: 'right+space',
+		3: 'left+space',
+		#4: 'idle',
+		# 5: 'space',
+		} 
+		self.action_keys = list(self.action_dict.keys())  
+		
+		self.env_started = 0
+
 		self.step_counter = 0
 		self.max_step = max_step
 
@@ -80,6 +92,7 @@ class JKGame:
 		
 		for king in self.kings:
 			king.reset()
+
 		self.levels.reset()
 		os.environ["start"] = "1"
 		os.environ["gaming"] = "1"
@@ -134,9 +147,6 @@ class JKGame:
 				old_level = king.levels.current_level
 				old_y = king.y
 
-				if king.y < 297:
-					print("max y: " + str(king.y))
-
 				if king.y < king.maxy:
 					king.update_max_y(king.y)
 
@@ -158,6 +168,8 @@ class JKGame:
 
 					done = True if self.step_counter > self.max_step else False
 					return state, reward, done
+
+	
 
 	def running(self):
 		"""
@@ -235,6 +247,9 @@ class JKGame:
 		if os.environ["active"]:
 
 			for king in self.kings:
+				if king.y < king.maxy:
+					#print("previous best: " + str(king.maxy) + " new best: " + str(king.y))
+					king.maxy = king.y
 				king.blitme()
 
 		if os.environ["gaming"]:
@@ -320,30 +335,21 @@ class JKGame:
 			pygame.mixer.Channel(channel).set_volume(float(os.environ.get("volume")))
 
 def get_surrounding_platforms(env, king):
-   zone_of_vision_size = 150  # Adjust as needed
-   surrounding_platforms = []
-   for platform in env.levels.levels[env.levels.current_level].platforms: 
-       # Calculate relative distances to the king
-       relative_x = platform.x - king.x
-       relative_y = platform.y - king.y 
-       if abs(relative_x) <= zone_of_vision_size and abs(relative_y) <= zone_of_vision_size: 
-           surrounding_platforms.append((relative_x, relative_y))
-   return surrounding_platforms
+	zone_of_vision_size = 150  # Adjust as needed
+	surrounding_platforms = []
+	for platform in env.levels.levels[env.levels.current_level].platforms: 
+		# Calculate relative distances to the king
+		relative_x = platform.x - king.x
+		relative_y = platform.y - king.y 
+		if abs(relative_x) <= zone_of_vision_size and abs(relative_y) <= zone_of_vision_size: 
+			surrounding_platforms.append((relative_x, relative_y))
+	return surrounding_platforms
+	
 
 def eval_genomes(genomes, config):
 	# Environment Preparation
-	action_dict = {
-		0: 'right',
-		1: 'left',
-		2: 'right+space',
-		3: 'left+space',
-		#4: 'idle',
-		# 5: 'space',
-	}        
-
-	env = JKGame(max_step=1000, n_kings=250)
+	env = JKGame(max_step=1000, n_kings=150)
 	env.reset()
-	action_keys = list(action_dict.keys())
 
 	nets = []
 	for genome_id, genome in genomes:
@@ -353,10 +359,10 @@ def eval_genomes(genomes, config):
 		nets.append(net)
 
 	# Actually doing some training
-	yourmother = True
-	yourcounter = 0
 	previous_actions = [0] * len(env.kings)
-	while yourmother:
+	n_ticks = 500
+
+	for counter in range(n_ticks):
 		actions = []
 		for index, king in enumerate(env.kings):
 			#surrounding_platforms = get_surrounding_platforms(env, king) 
@@ -364,28 +370,22 @@ def eval_genomes(genomes, config):
 			#inputs = surrounding_platforms + king_state
 			#print('inputs : '+str(inputs))
 			output = nets[env.kings.index(king)].activate(king_state)
-			# if king.maxy < 297 or king.maxy > 300:
-			# 	print(king.maxy)
 			action = output.index(max(output))
 			actions.append(action)
 			previous_actions[index] = action
 		#genome[index].fitness += reward
 		reward = env.step(actions)
-		yourcounter += 1
-		if yourcounter > 500:
-			for index, genome in enumerate(genomes):
-				genome[1].fitness = 300-env.kings[index].maxy
-			yourmother = False
-	
-		
+
+	for index, genome in enumerate(genomes):
+		genome[1].fitness = 300-env.kings[index].maxy if genome[1].fitness != 0 else 0
+		print(genome)
+
 # To do fix stupid while loop into for loop
 # To do, set list of ALL platforms as input, and then correlate with king.levels.current_level and thenpray it fucking work
 
 
 def run(config_file):
-	config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
-                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                         config_file)
+	config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_file)
 	p = neat.Population(config)
 
 	# Add a stdout reporter to show progress in the terminal.
