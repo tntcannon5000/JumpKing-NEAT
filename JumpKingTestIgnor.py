@@ -341,7 +341,7 @@ def eval_genomes(genomes, config):
 		# 5: 'space',
 	}        
 
-	env = JKGame(max_step=1000, n_kings=150)
+	env = JKGame(max_step=1000, n_kings=200)
 	env.reset()
 	action_keys = list(action_dict.keys())
 
@@ -373,7 +373,6 @@ def eval_genomes(genomes, config):
 		if yourcounter > 500:
 			for index, genome in enumerate(genomes):
 				genome[1].fitness = 300-env.kings[index].maxy
-				print(genome)
 			yourmother = False
 	
 		
@@ -388,7 +387,7 @@ def run(config_file):
 	stats = neat.StatisticsReporter()
 	p.add_reporter(stats)
 	
-	winner = p.run(eval_genomes, 50)
+	winner = p.run(eval_genomes, 100)
 
 if __name__ == "__main__":
 	#Game = JKGame()
