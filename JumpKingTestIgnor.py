@@ -142,32 +142,30 @@ class JKGame:
 			self._update_guistuff()
 			self._update_audio()
 			pygame.display.update()
-			
-			for king in self.kings:
+			reward = [0] * len(self.kings)
+			for index,king in enumerate(self.kings):
 				old_level = king.levels.current_level
 				old_y = king.y
 
 				if king.y < king.maxy:
 					king.update_max_y(king.y)
+					reward[index]+= 0.1
 
 				if self.move_available(king):
 					self.step_counter += 1
-					state = [king.levels.current_level, king.x, king.y, king.jumpCount]
 					##################################################################################################
 					# Define the reward from environment                                                             #
 					##################################################################################################
 					if king.levels.current_level > old_level or (king.levels.current_level == old_level and king.y < old_y):
-						reward = 0
+						reward[index]+= 1
 					else:
 						self.visited[(king.levels.current_level, king.y)] = self.visited.get((king.levels.current_level, king.y), 0) + 1
 						if self.visited[(king.levels.current_level, king.y)] < self.visited[(old_level, old_y)]:
 							self.visited[(king.levels.current_level, king.y)] = self.visited[(old_level, old_y)] + 1
 
-						reward = -self.visited[(king.levels.current_level, king.y)]
+						reward[index]+= -self.visited[(king.levels.current_level, king.y)]* 0.1 
 					####################################################################################################
-
-					done = True if self.step_counter > self.max_step else False
-					return state, reward, done
+			return reward
 
 	
 
@@ -337,18 +335,22 @@ class JKGame:
 def get_surrounding_platforms(env, king):
 	zone_of_vision_size = 150  # Adjust as needed
 	surrounding_platforms = []
+	MAX_PLATFORM_LEVELS = 40
 	for platform in env.levels.levels[env.levels.current_level].platforms: 
 		# Calculate relative distances to the king
 		relative_x = platform.x - king.x
 		relative_y = platform.y - king.y 
 		if abs(relative_x) <= zone_of_vision_size and abs(relative_y) <= zone_of_vision_size: 
 			surrounding_platforms.append((relative_x, relative_y))
+
+	# Pad out the surrounding_platforms list with Max_platform_levels - len(surrounding_platforms) values
+	surrounding_platforms += [(-1, -1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
 	return surrounding_platforms
 	
 
 def eval_genomes(genomes, config):
 	# Environment Preparation
-	env = JKGame(max_step=1000, n_kings=150)
+	env = JKGame(max_step=1000, n_kings=config.pop_size)
 	env.reset()
 
 	nets = []
@@ -365,11 +367,11 @@ def eval_genomes(genomes, config):
 	for counter in range(n_ticks):
 		actions = []
 		for index, king in enumerate(env.kings):
-			#surrounding_platforms = get_surrounding_platforms(env, king) 
+			surrounding_platforms = [item for sublist in get_surrounding_platforms(env, king) for item in sublist]
 			king_state = [king.levels.current_level, king.x, king.y, king.jumpCount, previous_actions[index]]
-			#inputs = surrounding_platforms + king_state
+			inputs = surrounding_platforms + king_state
 			#print('inputs : '+str(inputs))
-			output = nets[env.kings.index(king)].activate(king_state)
+			output = nets[env.kings.index(king)].activate(inputs)
 			action = output.index(max(output))
 			actions.append(action)
 			previous_actions[index] = action
@@ -377,7 +379,8 @@ def eval_genomes(genomes, config):
 		reward = env.step(actions)
 
 	for index, genome in enumerate(genomes):
-		genome[1].fitness = 300-env.kings[index].maxy if genome[1].fitness != 0 else 0
+		#genome[1].fitness = 300-env.kings[index].maxy if genome[1].fitness != 0 else 0
+		genome[1].fitness = 300-env.kings[index].maxy
 		print(genome)
 
 # To do fix stupid while loop into for loop
