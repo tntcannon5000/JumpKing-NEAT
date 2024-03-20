@@ -341,10 +341,10 @@ def get_surrounding_platforms(env, king):
 		relative_x = platform.x - king.x
 		relative_y = platform.y - king.y 
 		if abs(relative_x) <= zone_of_vision_size and abs(relative_y) <= zone_of_vision_size: 
-			surrounding_platforms.append((relative_x, relative_y))
+			surrounding_platforms.append((relative_x, relative_y,platform.width,platform.height))
 
 	# Pad out the surrounding_platforms list with Max_platform_levels - len(surrounding_platforms) values
-	surrounding_platforms += [(-1, -1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
+	surrounding_platforms += [(-1, -1,-1,-1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
 	return surrounding_platforms
 	
 
