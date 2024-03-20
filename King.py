@@ -134,6 +134,8 @@ class King():
 
 		self.falls = 0
 
+		self.reward = 0
+
 		# Animation
 
 		self.x, self.y = 230, 298

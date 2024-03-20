@@ -232,9 +232,16 @@ class JKGame:
 		if os.environ["active"]:
 
 			for king in self.kings:
-				if king.y < king.maxy:
-					#print("previous best: " + str(king.maxy) + " new best: " + str(king.y))
-					king.maxy = king.y
+				old_level = king.levels.current_level
+				old_y = king.y
+				if king.levels.current_level > old_level or (king.levels.current_level == old_level and king.y < old_y):
+					king.reward = 0
+				else:
+					self.visited[(king.levels.current_level, king.y)] = self.visited.get((king.levels.current_level, king.y), 0) + 1
+					if self.visited[(king.levels.current_level, king.y)] < self.visited[(old_level, old_y)]:
+						self.visited[(king.levels.current_level, king.y)] = self.visited[(old_level, old_y)] + 1
+
+					king.reward = -self.visited[(king.levels.current_level, king.y)]
 				king.blitme()
 
 		if os.environ["gaming"]:
@@ -372,7 +379,7 @@ def eval_genomes(genomes, config):
 		yourcounter += 1
 		if yourcounter > 500:
 			for index, genome in enumerate(genomes):
-				genome[1].fitness = 300-env.kings[index].maxy
+				genome[1].fitness = env.kings[index].reward
 			yourmother = False
 	
 		
