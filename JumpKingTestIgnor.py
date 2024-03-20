@@ -69,6 +69,18 @@ class JKGame:
 
 		#self.start = Start(self.game_screen, self.menus)
 
+		self.action_dict = {
+		0: 'right',
+		1: 'left',
+		2: 'right+space',
+		3: 'left+space',
+		#4: 'idle',
+		# 5: 'space',
+		} 
+		self.action_keys = list(self.action_dict.keys())  
+		
+		self.env_started = 0
+
 		self.step_counter = 0
 		self.max_step = max_step
 
@@ -130,6 +142,7 @@ class JKGame:
 			self._update_guistuff()
 			self._update_audio()
 			pygame.display.update()
+			
 			for king in self.kings:
 				old_level = king.levels.current_level
 				old_y = king.y
@@ -155,6 +168,8 @@ class JKGame:
 
 					done = True if self.step_counter > self.max_step else False
 					return state, reward, done
+
+	
 
 	def running(self):
 		"""
@@ -329,21 +344,12 @@ def get_surrounding_platforms(env, king):
 		if abs(relative_x) <= zone_of_vision_size and abs(relative_y) <= zone_of_vision_size: 
 			surrounding_platforms.append((relative_x, relative_y))
 	return surrounding_platforms
+	
 
 def eval_genomes(genomes, config):
 	# Environment Preparation
-	action_dict = {
-		0: 'right',
-		1: 'left',
-		2: 'right+space',
-		3: 'left+space',
-		#4: 'idle',
-		# 5: 'space',
-	}        
-
 	env = JKGame(max_step=1000, n_kings=150)
 	env.reset()
-	action_keys = list(action_dict.keys())
 
 	nets = []
 	for genome_id, genome in genomes:
@@ -353,10 +359,10 @@ def eval_genomes(genomes, config):
 		nets.append(net)
 
 	# Actually doing some training
-	yourmother = True
-	yourcounter = 0
 	previous_actions = [0] * len(env.kings)
-	while yourmother:
+	n_ticks = 500
+
+	for counter in range(n_ticks):
 		actions = []
 		for index, king in enumerate(env.kings):
 			#surrounding_platforms = get_surrounding_platforms(env, king) 
@@ -369,14 +375,13 @@ def eval_genomes(genomes, config):
 			previous_actions[index] = action
 		#genome[index].fitness += reward
 		reward = env.step(actions)
-		yourcounter += 1
-		if yourcounter > 500:
-			for index, genome in enumerate(genomes):
-				genome[1].fitness = 300-env.kings[index].maxy
-				print(genome)
-			yourmother = False
-	
-		
+
+	for index, genome in enumerate(genomes):
+		genome[1].fitness = 300-env.kings[index].maxy if genome[1].fitness != 0 else 0
+		print(genome)
+
+# To do fix stupid while loop into for loop
+# To do, set list of ALL platforms as input, and then correlate with king.levels.current_level and thenpray it fucking work
 
 
 def run(config_file):
