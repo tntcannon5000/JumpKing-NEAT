@@ -95,7 +95,7 @@ class JKGame:
 
 		self.levels.reset()
 		os.environ["start"] = "1"
-		os.environ["gaming"] = "1"
+		os.environ["gaming"] = "1" 
 		os.environ["pause"] = ""
 		os.environ["active"] = "1"
 		os.environ["attempt"] = str(int(os.environ.get("attempt")) + 1)
@@ -390,8 +390,8 @@ def eval_genomes(genomes, config):
 		rewards = env.step(actions)
 
 		for index, genome in enumerate(genomes):
-			#genome[1].fitness = 300-env.kings[index].maxy
-   			genome[1].fitness = env.kings[index].reward
+			genome[1].fitness = 300-env.kings[index].maxy
+   			#genome[1].fitness = env.kings[index].reward
 			#genome[1].fitness = env.kings[index].reward
 	
 		
