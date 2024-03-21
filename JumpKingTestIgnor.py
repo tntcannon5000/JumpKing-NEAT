@@ -48,8 +48,8 @@ class JKGame:
 
 		self.game_screen = pygame.Surface((int(os.environ.get("screen_width")), int(os.environ.get("screen_height"))), pygame.HWSURFACE|pygame.DOUBLEBUF)#|pygame.SRCALPHA)
 
-		print(type(self.game_screen))
-		print(type(self.screen))
+		# print(type(self.game_screen))
+		# print(type(self.screen))
 		
 		self.game_screen_x = 0
 
@@ -95,7 +95,7 @@ class JKGame:
 
 		self.levels.reset()
 		os.environ["start"] = "1"
-		os.environ["gaming"] = "1"
+		os.environ["gaming"] = "1" 
 		os.environ["pause"] = ""
 		os.environ["active"] = "1"
 		os.environ["attempt"] = str(int(os.environ.get("attempt")) + 1)
@@ -124,7 +124,7 @@ class JKGame:
 		and (not king.isSplat or king.splatCount > king.splatDuration)
 		return available
 
-	def step(self, actions):
+	def step(self, actions,jumpCountML = None):
 		
 		#old_y = (self.king.levels.max_level - self.king.levels.current_level) * 360 + self.king.y
 			self.clock.tick(self.fps)
@@ -134,7 +134,7 @@ class JKGame:
 				for i, king in enumerate(self.kings):
 					if not self.move_available(king):
 						actions[i] = None
-					self._update_gamestuff(i,king,actions=actions[i])
+					self._update_gamestuff(i,king,actions=actions[i],jumpCountML=jumpCountML)
 
 			self._update_gamescreen()
 			self._update_guistuff()
@@ -193,11 +193,11 @@ class JKGame:
 
 				self._resize_screen(event.w, event.h)
 
-	def _update_gamestuff(self,index,king,actions=None):
+	def _update_gamestuff(self,index,king,actions=None,jumpCountML=None):
 		old_level = king.levels.current_level
 		old_y = king.y
 				
-		self.levels.update_levels(index,king, self.babe, agentCommand=actions)
+		self.levels.update_levels(index,king, self.babe, agentCommand=actions,jumpCountML=jumpCountML)
   
 		if self.move_available(king):
 					
@@ -347,6 +347,28 @@ def get_surrounding_platforms(env, king):
 	surrounding_platforms += [(-1,-1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
 	return surrounding_platforms
 
+def convert_to_action_range(sigmoid_output, min_value=1, max_value=31):
+  """
+  Converts a value between 0 and 1 (sigmoid output) to a discrete value within a specified range.
+
+  Args:
+      sigmoid_output: The value between 0 and 1 obtained from the sigmoid activation function.
+      min_value: The minimum value in the desired output range (default: 1).
+      max_value: The maximum value in the desired output range (default: 31).
+
+  Returns:
+      An integer representing the discrete value within the specified range.
+  """
+
+  # Ensure min_value is less than or equal to max_value
+  assert min_value <= max_value, "Minimum value must be less than or equal to maximum value."
+
+  # Linear scaling to the desired range
+  scaled_output = (sigmoid_output * (max_value - min_value)) + min_value
+
+  # Round to nearest integer (biased towards higher values to avoid floor)
+  return int(round(scaled_output + 0.5))
+
 def eval_genomes(genomes, config):
 	# Environment Preparation
 	action_dict = {
@@ -358,7 +380,14 @@ def eval_genomes(genomes, config):
 		#5: 'space',
 	}        
 
+
+	# print("YEEEEEEEEEEEEEEET")
+	# print(len(genomes))
+	# print("YEEEEEEEEEEEEEEET")
 	
+
+	env = JKGame(max_step=1000, n_kings=len(genomes))
+	env.reset()
 
 	nets = []
 	for genome_id, genome in genomes:
@@ -366,9 +395,6 @@ def eval_genomes(genomes, config):
 		genome.fitness = 0  # start with fitness level of 0
 		net = neat.nn.FeedForwardNetwork.create(genome, config)
 		nets.append(net)
-		
-	env = JKGame(max_step=1000, n_kings=len(genomes))
-	env.reset()
 
 	# Actually doing some training
 	previous_actions = [0] * len(env.kings)
@@ -382,20 +408,20 @@ def eval_genomes(genomes, config):
 			inputs = surrounding_platforms + king_state
 			#print('inputs : '+str(inputs))
 			output = nets[env.kings.index(king)].activate(inputs)
-			action = output.index(max(output))
+			action = output.index(max(output[0:4]))
+			jumpCountML = convert_to_action_range(output[4]) 
 			#actions.append(action)
 			actions.append(random.randint(2,3))
 			previous_actions[index] = action
 		#genome[index].fitness += reward
-		rewards = env.step(actions)
+		rewards = env.step(actions,jumpCountML)
 
 		for index, genome in enumerate(genomes):
-			#genome[1].fitness = 300-env.kings[index].maxy
-   			genome[1].fitness = env.kings[index].reward
+			if genome[1].fitness < (300-env.kings[index].maxy):
+				genome[1].fitness = (300-env.kings[index].maxy)
+   			#genome[1].fitness = env.kings[index].reward
 			#genome[1].fitness = env.kings[index].reward
 	
-		
-
 
 def run(config_file):
 	config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_file)
@@ -405,6 +431,7 @@ def run(config_file):
 	p.add_reporter(neat.StdOutReporter(True))
 	stats = neat.StatisticsReporter()
 	p.add_reporter(stats)
+
 	
 	winner = p.run(eval_genomes, 100)
 

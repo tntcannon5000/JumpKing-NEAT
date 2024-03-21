@@ -244,13 +244,13 @@ class King():
 			self.snow_jump_particle.reset()
 
 
-	def update(self, command=None, agentCommand=None):
+	def update(self, command=None, agentCommand=None, jumpCountML=None):
 
 		if os.environ.get("mode") == "normal":
 
 			if not self.isFalling and not self.levels.ending:
 
-				self._check_events(agentCommand)
+				self._check_events(agentCommand, jumpCountML)
 
 			elif self.levels.ending:
 
@@ -320,8 +320,11 @@ class King():
 
 			self.isWalk = False
 
-	def _check_events(self, agentCommand=None):
+	def _check_events(self, agentCommand=None,jumpCountML = None):
 			if agentCommand is not None:
+				# Manually enter jump count from the network if it is being trained
+				if jumpCountML is not None:
+					self.jumpCount = jumpCountML
 				keys = get_action_dict(agentCommand)
 			else:
 				keys = pygame.key.get_pressed()
@@ -342,18 +345,49 @@ class King():
 
 					elif self.jumpCount > self.maxJumpCount:
 
-						if keys[pygame.K_RIGHT] and keys[pygame.K_UP] and keys[pygame.K_UP]:
+						if keys[pygame.K_RIGHT]:
 
 							self._jump("right")
 
-						elif keys[pygame.K_LEFT] and keys[pygame.K_UP] and keys[pygame.K_UP]:
+						elif keys[pygame.K_LEFT]:
 
 							self._jump("left")
 
 						elif keys[pygame.K_UP]:
 
 							self._jump("up")
+					#This block is added for NEAT machine learning to make individual genome jump and not stay still
+					elif jumpCountML is not None and jumpCountML<self.maxJumpCount:
 
+						if keys[pygame.K_RIGHT]:
+							self.splatCount = 0
+							self.idle_counter = 0
+
+							# Walk
+							if not self.isCrouch:
+								self._walk("right")
+							# Jump
+							else:
+								self._jump("right")
+
+						elif keys[pygame.K_LEFT]:
+							self.splatCount = 0
+							self.idle_counter = 0
+
+							#Walk
+							if not self.isCrouch:
+								self._walk("left")
+							#Jump
+							else:
+								self._jump("left")
+					else:
+
+						self.idle_counter += 1
+
+						self.isWalk = False
+
+						if self.isCrouch:
+							self._jump("up")
 				else:
 
 					if keys[pygame.K_RIGHT]:
