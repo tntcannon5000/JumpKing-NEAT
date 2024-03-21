@@ -202,34 +202,31 @@ class Levels:
 
 			print("BLIT2 ERROR: ", e)
 
-	def update_levels(self, kings, babe, agentCommand):
+	def update_levels(self,index, king, babe, agentCommand):
 
-		for king in kings:
-			self.update_wind(king)
+		
+		self.update_wind(king)
 
-			self.update_hiddenwalls(king)
+		self.update_hiddenwalls(king)
 
-			self.update_npcs(king)
+		self.update_npcs(king)
 
-			self.update_readables(king)
+		self.update_readables(king)
 
-			self.update_flyers(king)
+		self.update_flyers(king)
 
-			self.update_discovery(king)
+		self.update_discovery(king)
 
-			self.update_audio()
+		self.update_audio()
 
 		if self.ending:
-			for king in kings:
-				self.END = self.Ending_Animation.update(self.levels[self.current_level], king, babe)
+			
+			self.END = self.Ending_Animation.update(self.levels[self.current_level], king, babe)
 
 		else:
-			for index, king in enumerate(kings):
-				
-				if agentCommand is not None:
-					king.update(agentCommand=agentCommand[index])
-
-				babe.update(king)
+			
+			king.update(agentCommand=agentCommand)
+			babe.update(king)
 
 
 	def update_flyers(self, king):

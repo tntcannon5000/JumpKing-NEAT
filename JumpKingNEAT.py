@@ -19,8 +19,10 @@ from Menu import Menus
 
 from Start import Start
 
-
-
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
 import random
 import time
 import neat
@@ -30,7 +32,7 @@ import neat
 class JKGame:
 	""" Overall class to manga game aspects """
         
-	def __init__(self, max_step=float('inf'),):
+	def __init__(self, n_kings, max_step=float('inf')):
 
 		pygame.init()
 
@@ -39,26 +41,45 @@ class JKGame:
 		self.clock = pygame.time.Clock()
 
 		self.fps = int(os.environ.get("fps"))
- 
+
 		self.bg_color = (0, 0, 0)
 
-		self.screen = pygame.display.set_mode((int(os.environ.get("screen_width")) * int(os.environ.get("window_scale")), int(os.environ.get("screen_height")) * int(os.environ.get("window_scale"))), pygame.HWSURFACE|pygame.DOUBLEBUF)
+		self.screen = pygame.display.set_mode((int(os.environ.get("screen_width")) * int(os.environ.get("window_scale")), int(os.environ.get("screen_height")) * int(os.environ.get("window_scale"))), pygame.HWSURFACE|pygame.DOUBLEBUF)#|pygame.SRCALPHA)
 
-		self.game_screen = pygame.Surface((int(os.environ.get("screen_width")), int(os.environ.get("screen_height"))), pygame.HWSURFACE|pygame.DOUBLEBUF)
+		self.game_screen = pygame.Surface((int(os.environ.get("screen_width")), int(os.environ.get("screen_height"))), pygame.HWSURFACE|pygame.DOUBLEBUF)#|pygame.SRCALPHA)
 
+		print(type(self.game_screen))
+		print(type(self.screen))
+		
 		self.game_screen_x = 0
 
-		pygame.display.set_icon(pygame.image.load("images\\sheets\\JumpKingIcon.ico"))
+		pygame.display.set_icon(pygame.image.load("images/sheets/JumpKingIcon.ico"))
 
 		self.levels = Levels(self.game_screen)
 
-		self.king = King(self.game_screen, self.levels)
+		#self.king = King(self.game_screen, self.levels)
+		
+		self.kings = []
+		for _ in range(n_kings):
+			self.kings.append(King(self.game_screen, self.levels))
 
 		self.babe = Babe(self.game_screen, self.levels)
 
-		self.menus = Menus(self.game_screen, self.levels, self.king)
+		#self.menus = Menus(self.game_screen, self.levels, self.king)
 
-		self.start = Start(self.game_screen, self.menus)
+		#self.start = Start(self.game_screen, self.menus)
+
+		self.action_dict = {
+		0: 'right',
+		1: 'left',
+		2: 'right+space',
+		3: 'left+space',
+		#4: 'idle',
+		# 5: 'space',
+		} 
+		self.action_keys = list(self.action_dict.keys())  
+		
+		self.env_started = 0
 
 		self.step_counter = 0
 		self.max_step = max_step
@@ -68,7 +89,10 @@ class JKGame:
 		pygame.display.set_caption('Jump King At Home XD')
 
 	def reset(self):
-		self.king.reset()
+		
+		for king in self.kings:
+			king.reset()
+
 		self.levels.reset()
 		os.environ["start"] = "1"
 		os.environ["gaming"] = "1"
@@ -79,55 +103,46 @@ class JKGame:
 
 		self.step_counter = 0
 		done = False
-		state = [self.king.levels.current_level, self.king.x, self.king.y, self.king.jumpCount]
+		
+		for king in self.kings:
+			state = [king.levels.current_level, king.x, king.y, king.jumpCount]
 
-		self.visited = {}
-		self.visited[(self.king.levels.current_level, self.king.y)] = 1
+			self.visited = {}
+			self.visited[(king.levels.current_level, king.y)] = 1    
+		
+		# self.king.reset()
+		# state = [self.king.levels.current_level, self.king.x, self.king.y, self.king.jumpCount]
+
+		# self.visited = {}
+		# self.visited[(self.king.levels.current_level, self.king.y)] = 1
 
 		return done, state
 
-	def move_available(self):
-		available = not self.king.isFalling \
-					and not self.king.levels.ending \
-					and (not self.king.isSplat or self.king.splatCount > self.king.splatDuration)
+	def move_available(self,king):
+		available = not king.isFalling \
+		and not king.levels.ending \
+		and (not king.isSplat or king.splatCount > king.splatDuration)
 		return available
 
-	def step(self, action):
-		old_level = self.king.levels.current_level
-		old_y = self.king.y
+	def step(self, actions):
+		
 		#old_y = (self.king.levels.max_level - self.king.levels.current_level) * 360 + self.king.y
-		while True:
 			self.clock.tick(self.fps)
 			self._check_events()
 			if not os.environ["pause"]:
-				if not self.move_available():
-					action = None
-				self._update_gamestuff(action=action)
+				
+				for i, king in enumerate(self.kings):
+					if not self.move_available(king):
+						actions[i] = None
+					self._update_gamestuff(i,king,actions=actions[i])
 
 			self._update_gamescreen()
 			self._update_guistuff()
 			self._update_audio()
 			pygame.display.update()
+				
 
-
-			if self.move_available():
-				self.step_counter += 1
-				state = [self.king.levels.current_level, self.king.x, self.king.y, self.king.jumpCount]
-				##################################################################################################
-				# Define the reward from environment                                                             #
-				##################################################################################################
-				if self.king.levels.current_level > old_level or (self.king.levels.current_level == old_level and self.king.y < old_y):
-					reward = 0
-				else:
-					self.visited[(self.king.levels.current_level, self.king.y)] = self.visited.get((self.king.levels.current_level, self.king.y), 0) + 1
-					if self.visited[(self.king.levels.current_level, self.king.y)] < self.visited[(old_level, old_y)]:
-						self.visited[(self.king.levels.current_level, self.king.y)] = self.visited[(old_level, old_y)] + 1
-
-					reward = -self.visited[(self.king.levels.current_level, self.king.y)]
-				####################################################################################################
-
-				done = True if self.step_counter > self.max_step else False
-				return state, reward, done
+	
 
 	def running(self):
 		"""
@@ -156,13 +171,13 @@ class JKGame:
 
 				self.environment.save()
 
-				self.menus.save()
+				#self.menus.save()
 
 				sys.exit()
 
 			if event.type == pygame.KEYDOWN:
 
-				self.menus.check_events(event)
+				#self.menus.check_events(event)
 
 				if event.key == pygame.K_c:
 
@@ -178,15 +193,44 @@ class JKGame:
 
 				self._resize_screen(event.w, event.h)
 
-	def _update_gamestuff(self, action=None):
+	def _update_gamestuff(self,index,king,actions=None):
+		old_level = king.levels.current_level
+		old_y = king.y
+				
+		self.levels.update_levels(index,king, self.babe, agentCommand=actions)
+  
+		if self.move_available(king):
+					
+					#self.step_counter += 1
+					##################################################################################################
+					# Define the reward from environment                                                             #
+					##################################################################################################
+					# if king.levels.current_level > old_level or (king.levels.current_level == old_level and king.y < old_y):
+					# 	reward[index]+= 1
+					# else:
+					# 	self.visited[(king.levels.current_level, king.y)] = self.visited.get((king.levels.current_level, king.y), 0) + 1
+					# 	if self.visited[(king.levels.current_level, king.y)] < self.visited[(old_level, old_y)]:
+					# 		self.visited[(king.levels.current_level, king.y)] = self.visited[(old_level, old_y)] + 1
 
-		self.levels.update_levels(self.king, self.babe, agentCommand=action)
+					# 	#king.reward+= -self.visited[(king.levels.current_level, king.y)]* 0.1 
+					####################################################################################################
+			if king.y < king.maxy:
+				king.update_max_y(king.y)
+				king.reward+= 0.1
+			if king.levels.current_level == old_level and king.y < old_y:
+				king.reward+=0.5
+			if king.levels.current_level > old_level:
+				king.reward+=1
+			if king.maxy == old_y: #penalize for staying on the same vertical spot i.e not jumping
+				king.reward+= -0.1
+     
+		
 
 	def _update_guistuff(self):
 
-		if self.menus.current_menu:
+		# if self.menus.current_menu:
 
-			self.menus.update()
+		# 	self.menus.update() menu
 
 		if not os.environ["gaming"]:
 
@@ -203,8 +247,8 @@ class JKGame:
 			self.levels.blit1()
 
 		if os.environ["active"]:
-
-			self.king.blitme()
+			for king in self.kings:
+				king.blitme()
 
 		if os.environ["gaming"]:
 
@@ -222,7 +266,7 @@ class JKGame:
 
 			self.start.blitme()
 
-		self.menus.blitme()
+		# self.menus.blitme() menu
 
 		self.screen.blit(pygame.transform.scale(self.game_screen, self.screen.get_size()), (self.game_screen_x, 0))
 
@@ -288,57 +332,84 @@ class JKGame:
 
 			pygame.mixer.Channel(channel).set_volume(float(os.environ.get("volume")))
 
+def get_surrounding_platforms(env, king):
+	zone_of_vision_size = 100  # Adjust as needed
+	surrounding_platforms = []
+	MAX_PLATFORM_LEVELS = 40
+	for platform in env.levels.levels[env.levels.current_level].platforms: 
+		# Calculate relative distances to the king
+		relative_x = (platform.x - king.x)#/472
+		relative_y = (platform.y - king.y)#/344
+		if abs(relative_x) <= zone_of_vision_size and abs(relative_y) <= zone_of_vision_size: 
+			surrounding_platforms.append((relative_x, relative_y))
 
-
-nnetworks = []
-kings = []
-genomeslist = []
+	# Pad out the surrounding_platforms list with Max_platform_levels - len(surrounding_platforms) values
+	surrounding_platforms += [(-1,-1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
+	return surrounding_platforms
 
 def eval_genomes(genomes, config):
-	# CODE TO RUN EACH GENERATION
-	Game = JKGame()
+	# Environment Preparation
+	action_dict = {
+		0: 'right',
+		1: 'left',
+		2: 'right+space',
+		3: 'left+space',
+		#4: 'idle',
+		#5: 'space',
+	}        
+
+	
+
+	nets = []
 	for genome_id, genome in genomes:
-		genome.fitness = 0
+		#print(type(genome))
+		genome.fitness = 0  # start with fitness level of 0
 		net = neat.nn.FeedForwardNetwork.create(genome, config)
-		nnetworks.append(net)
-		kings.append(King(Game.screen, Game.levels))
-		genomeslist.append(genome)
+		nets.append(net)
+		
+	env = JKGame(max_step=1000, n_kings=len(genomes))
+	env.reset()
 
-# def prepare_game(n_genomes):
-# 	Game = JKGame()
-# 	for genome_id, genome in n_genomes:
-# 		genome.fitness = 0
-# 		net = neat.nn.FeedForwardNetwork.create(genome, config)
-# 		nnetworks.append(net)
-# 		kings.append(King(game.screen, game.levels))
-# 		genomeslist.append(genome)
+	# Actually doing some training
+	previous_actions = [0] * len(env.kings)
+	n_ticks = 500
 
+	for counter in range(n_ticks):
+		actions = []
+		for index, king in enumerate(env.kings):
+			surrounding_platforms = [item for sublist in get_surrounding_platforms(env, king) for item in sublist]
+			king_state = [king.levels.current_level, king.jumpCount, previous_actions[index]]
+			inputs = surrounding_platforms + king_state
+			#print('inputs : '+str(inputs))
+			output = nets[env.kings.index(king)].activate(inputs)
+			action = output.index(max(output))
+			#actions.append(action)
+			actions.append(random.randint(2,3))
+			previous_actions[index] = action
+		#genome[index].fitness += reward
+		rewards = env.step(actions)
 
+		for index, genome in enumerate(genomes):
+			#genome[1].fitness = 300-env.kings[index].maxy
+   			genome[1].fitness = env.kings[index].reward
+			#genome[1].fitness = env.kings[index].reward
+	
+		
 
-	# for i, king in enumerate(kings):
-	# 	genomeslist[i].fitness += 0.1
-	# 	while not False:
-	# 		output = nnetworks[i].activate(next_state)
-	# 		action = np.argmax(output)
-	# 		next_state, reward, done = Game.step(action)
-	# 		genomeslist[i].fitness += reward
-
-	print("your mother")
 
 def run(config_file):
 	config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_file)
-	pop = neat.Population(config)
+	p = neat.Population(config)
 
-	pop.add_reporter(neat.StdOutReporter(True))
+	# Add a stdout reporter to show progress in the terminal.
+	p.add_reporter(neat.StdOutReporter(True))
 	stats = neat.StatisticsReporter()
-	pop.add_reporter(stats)
-
-	game = JKGame()
-	winner = pop.run(eval_genomes, 5)
-	print('\nBest genome:\n{!s}'.format(winner))
-
+	p.add_reporter(stats)
+	
+	winner = p.run(eval_genomes, 100)
 
 if __name__ == "__main__":
 	#Game = JKGame()
 	#Game.running()
+	#train(1)
 	run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
