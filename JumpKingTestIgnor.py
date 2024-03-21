@@ -352,28 +352,6 @@ def get_surrounding_platforms(env, king):
 	surrounding_platforms += [(-1,-1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
 	return surrounding_platforms
 
-def convert_to_action_range(sigmoid_output, min_value=1, max_value=31):
-  """
-  Converts a value between 0 and 1 (sigmoid output) to a discrete value within a specified range.
-
-  Args:
-      sigmoid_output: The value between 0 and 1 obtained from the sigmoid activation function.
-      min_value: The minimum value in the desired output range (default: 1).
-      max_value: The maximum value in the desired output range (default: 31).
-
-  Returns:
-      An integer representing the discrete value within the specified range.
-  """
-
-  # Ensure min_value is less than or equal to max_value
-  assert min_value <= max_value, "Minimum value must be less than or equal to maximum value."
-
-  # Linear scaling to the desired range
-  scaled_output = (sigmoid_output * (max_value - min_value)) + min_value
-
-  # Round to nearest integer (biased towards higher values to avoid floor)
-  return int(round(scaled_output + 0.5))
-
 def eval_genomes(genomes, config):
 	# Environment Preparation
 	action_dict = {
@@ -384,49 +362,104 @@ def eval_genomes(genomes, config):
 		#4: 'idle',
 		#5: 'space',
 	}        
-
-
-	print("YEEEEEEEEEEEEEEET")
-	print(len(genomes))
-	print("YEEEEEEEEEEEEEEET")
-	
+	previous_actions = actions
 
 	env = JKGame(max_step=1000, n_kings=len(genomes))
 	env.reset()
 
 	nets = []
 	for genome_id, genome in genomes:
-		#print(type(genome))
 		genome.fitness = 0  # start with fitness level of 0
 		net = neat.nn.FeedForwardNetwork.create(genome, config)
 		nets.append(net)
-
-	# Actually doing some training
-	previous_actions = [0] * len(env.kings)
+	actions = [] * len(genomes)
+	
+	# Actually doing some training	
 	n_ticks = 500
-
 	for counter in range(n_ticks):
 		actions = []
 		for index, king in enumerate(env.kings):
 			surrounding_platforms = [item for sublist in get_surrounding_platforms(env, king) for item in sublist]
 			king_state = [king.levels.current_level, king.jumpCount, previous_actions[index]]
 			inputs = surrounding_platforms + king_state
-			#print('inputs : '+str(inputs))
 			output = nets[env.kings.index(king)].activate(inputs)
-			print(output)
 			action = output.index(max(output[0:4]))
-			action_countML = convert_to_action_range(output[4]) 
-			actions.append(action)
-			previous_actions[index] = action
-		#genome[index].fitness += reward
-		rewards = env.step(actions)
+			actions[index] = action
+		env.step(actions)
 
 		for index, genome in enumerate(genomes):
 			if genome[1].fitness < (300-env.kings[index].maxy):
 				genome[1].fitness = (300-env.kings[index].maxy)
-   			#genome[1].fitness = env.kings[index].reward
-			#genome[1].fitness = env.kings[index].reward
 	
+
+def generate_ml_move():
+	
+	pass
+
+def generate_random_move():
+	length = np.random.randint(1, 30)
+	number = random.randint(0, 3)
+	random_list = [number] * length
+	#random_list + 0
+	return random_list
+	
+
+def eval_genomes(genomes, config):
+	# Environment Preparation
+	action_dict = {
+		0: 'right',
+		1: 'left',
+		2: 'right+space',
+		3: 'left+space',
+		4: 'idle',
+		#5: 'space',
+	}        
+	
+
+	env = JKGame(max_step=100000, n_kings=len(genomes))
+	env.reset()
+
+	nets = []
+	actions_queue = []
+	for genome_id, genome in genomes:
+		genome.fitness = 0  # start with fitness level of 0
+		net = neat.nn.FeedForwardNetwork.create(genome, config)
+		nets.append(net)
+		actions_queue.append([])
+	
+	actions = [0] * len(genomes)
+	kings_move_count = [0] * len(genomes)
+
+	# Actually doing some training
+	n_moves = 8
+	running = True
+	toquit = False
+	while True:
+		for index, king in enumerate(env.kings):
+			if len(actions_queue[index]) > 0:
+				actions[index] = actions_queue[index].pop(0)
+
+			elif len(actions_queue[index]) == 0 and kings_move_count[index] < n_moves:
+				actions_queue[index] = generate_random_move()
+				actions[index] = actions_queue[index].pop(0)
+				kings_move_count[index] += 1
+				pass
+			
+			elif (len(actions_queue[index]) == 0) and (kings_move_count[index] >= n_moves): 
+				if all(kings_move_count >= n_moves for kings_move_count in kings_move_count):
+					toquit = True
+		
+		
+		env.step(actions)
+		for index, genome in enumerate(genomes):
+			if genome[1].fitness < (300-env.kings[index].maxy):
+				genome[1].fitness = (300-env.kings[index].maxy)
+		
+		previous_actions = actions
+
+		if toquit:
+			break
+
 
 def run(config_file):
 	config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_file)
