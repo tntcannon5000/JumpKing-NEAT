@@ -48,8 +48,10 @@ class JKGame:
 
 		self.game_screen = pygame.Surface((int(os.environ.get("screen_width")), int(os.environ.get("screen_height"))), pygame.HWSURFACE|pygame.DOUBLEBUF)#|pygame.SRCALPHA)
 
-		# print(type(self.game_screen))
-		# print(type(self.screen))
+		print("ADD A BREAKPOINT HERE")
+
+		print(type(self.game_screen))
+		print(type(self.screen))
 		
 		self.game_screen_x = 0
 
@@ -124,23 +126,55 @@ class JKGame:
 		and (not king.isSplat or king.splatCount > king.splatDuration)
 		return available
 
-	def step(self, actions,jumpCountML = None):
+	def step(self, actions):
 		
 		#old_y = (self.king.levels.max_level - self.king.levels.current_level) * 360 + self.king.y
-			self.clock.tick(self.fps)
-			self._check_events()
-			if not os.environ["pause"]:
+		self.clock.tick(self.fps)
+		self._check_events()
+		if not os.environ["pause"]:
 				
-				for i, king in enumerate(self.kings):
-					if not self.move_available(king):
-						actions[i] = None
-					self._update_gamestuff(i,king,actions=actions[i],jumpCountML=jumpCountML)
+			for i, king in enumerate(self.kings):
+				if not self.move_available(king):
+					actions[i] = None
+			self._update_gamestuff(actions=actions)
+			
+		self._update_gamescreen()
+		self._update_guistuff()
+		self._update_audio()
+		pygame.display.update()
+		reward = [0] * len(self.kings)
 
-			self._update_gamescreen()
-			self._update_guistuff()
-			self._update_audio()
-			pygame.display.update()
-				
+		for index,king in enumerate(self.kings):
+			old_level = king.levels.current_level
+			old_y = king.y
+			if self.move_available(king):
+					
+				# #self.step_counter += 1
+				# ##################################################################################################
+				# # Define the reward from environment                                                             #
+				# ##################################################################################################
+				# if king.levels.current_level > old_level or (king.levels.current_level == old_level and king.y < old_y):
+				# 	reward[index]+= 1
+				# else:
+				# 	self.visited[(king.levels.current_level, king.y)] = self.visited.get((king.levels.current_level, king.y), 0) + 1
+				# 	if self.visited[(king.levels.current_level, king.y)] < self.visited[(old_level, old_y)]:
+				# 		self.visited[(king.levels.current_level, king.y)] = self.visited[(old_level, old_y)] + 1
+
+				# 	#king.reward+= -self.visited[(king.levels.current_level, king.y)]* 0.1 
+				# ####################################################################################################
+				if king.maxy < king.y:
+					king.update_max_y(king.y)
+					king.reward+= 0.1
+				if king.levels.current_level == old_level and king.y < old_y:
+					king.reward+=0.5
+				if king.levels.current_level > old_level:
+					king.reward+=1
+				if king.maxy == old_y: #penalize for staying on the same vertical spot i.e not jumping
+					king.reward+= -0.1
+			if king.maxy > king.y:
+				king.update_max_y(king.y)
+				print("Max Y: ", king.maxy)
+	
 
 	
 
@@ -171,13 +205,13 @@ class JKGame:
 
 				self.environment.save()
 
-				#self.menus.save()
+				self.menus.save()
 
 				sys.exit()
 
 			if event.type == pygame.KEYDOWN:
 
-				#self.menus.check_events(event)
+				self.menus.check_events(event)
 
 				if event.key == pygame.K_c:
 
@@ -193,38 +227,9 @@ class JKGame:
 
 				self._resize_screen(event.w, event.h)
 
-	def _update_gamestuff(self,index,king,actions=None,jumpCountML=None):
-		old_level = king.levels.current_level
-		old_y = king.y
-				
-		self.levels.update_levels(index,king, self.babe, agentCommand=actions,jumpCountML=jumpCountML)
-  
-		if self.move_available(king):
-					
-					#self.step_counter += 1
-					##################################################################################################
-					# Define the reward from environment                                                             #
-					##################################################################################################
-					# if king.levels.current_level > old_level or (king.levels.current_level == old_level and king.y < old_y):
-					# 	reward[index]+= 1
-					# else:
-					# 	self.visited[(king.levels.current_level, king.y)] = self.visited.get((king.levels.current_level, king.y), 0) + 1
-					# 	if self.visited[(king.levels.current_level, king.y)] < self.visited[(old_level, old_y)]:
-					# 		self.visited[(king.levels.current_level, king.y)] = self.visited[(old_level, old_y)] + 1
+	def _update_gamestuff(self, actions=None):
 
-					# 	#king.reward+= -self.visited[(king.levels.current_level, king.y)]* 0.1 
-					####################################################################################################
-			if king.y < king.maxy:
-				king.update_max_y(king.y)
-				king.reward+= 0.1
-			if king.levels.current_level == old_level and king.y < old_y:
-				king.reward+=0.5
-			if king.levels.current_level > old_level:
-				king.reward+=1
-			if king.maxy == old_y: #penalize for staying on the same vertical spot i.e not jumping
-				king.reward+= -0.1
-     
-		
+		self.levels.update_levels(self.kings, self.babe, agentCommand=actions)
 
 	def _update_guistuff(self):
 
@@ -381,9 +386,9 @@ def eval_genomes(genomes, config):
 	}        
 
 
-	# print("YEEEEEEEEEEEEEEET")
-	# print(len(genomes))
-	# print("YEEEEEEEEEEEEEEET")
+	print("YEEEEEEEEEEEEEEET")
+	print(len(genomes))
+	print("YEEEEEEEEEEEEEEET")
 	
 
 	env = JKGame(max_step=1000, n_kings=len(genomes))
@@ -408,13 +413,13 @@ def eval_genomes(genomes, config):
 			inputs = surrounding_platforms + king_state
 			#print('inputs : '+str(inputs))
 			output = nets[env.kings.index(king)].activate(inputs)
+			print(output)
 			action = output.index(max(output[0:4]))
-			jumpCountML = convert_to_action_range(output[4]) 
-			#actions.append(action)
-			actions.append(random.randint(2,3))
+			action_countML = convert_to_action_range(output[4]) 
+			actions.append(action)
 			previous_actions[index] = action
 		#genome[index].fitness += reward
-		rewards = env.step(actions,jumpCountML)
+		rewards = env.step(actions)
 
 		for index, genome in enumerate(genomes):
 			if genome[1].fitness < (300-env.kings[index].maxy):
@@ -434,6 +439,9 @@ def run(config_file):
 
 	
 	winner = p.run(eval_genomes, 100)
+
+	print('\nBest genome:\n{!s}'.format(winner))
+	print('\nTraining completed. Reason: {!s}'.format(p.stop_reason))
 
 if __name__ == "__main__":
 	#Game = JKGame()
