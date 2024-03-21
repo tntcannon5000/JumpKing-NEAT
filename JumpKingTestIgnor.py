@@ -127,52 +127,53 @@ class JKGame:
 	def step(self, actions):
 		
 		#old_y = (self.king.levels.max_level - self.king.levels.current_level) * 360 + self.king.y
-		while True:
-			self.clock.tick(self.fps)
-			self._check_events()
+		self.clock.tick(self.fps)
+		self._check_events()
    			
-			if not os.environ["pause"]:
+		if not os.environ["pause"]:
 				
-				for i, king in enumerate(self.kings):
-					if not self.move_available(king):
-						actions[i] = None
+			for i, king in enumerate(self.kings):
+				if not self.move_available(king):
+					actions[i] = None
 
-				self._update_gamestuff(actions=actions)
+			self._update_gamestuff(actions=actions)
 			
-			self._update_gamescreen()
-			self._update_guistuff()
-			self._update_audio()
-			pygame.display.update()
-			reward = [0] * len(self.kings)
-			for index,king in enumerate(self.kings):
-				old_level = king.levels.current_level
-				old_y = king.y
-				if self.move_available(king):
+		self._update_gamescreen()
+		self._update_guistuff()
+		self._update_audio()
+		pygame.display.update()
+		reward = [0] * len(self.kings)
+		for index,king in enumerate(self.kings):
+			old_level = king.levels.current_level
+			old_y = king.y
+			if self.move_available(king):
 					
-					#self.step_counter += 1
-					##################################################################################################
-					# Define the reward from environment                                                             #
-					##################################################################################################
-					if king.levels.current_level > old_level or (king.levels.current_level == old_level and king.y < old_y):
-						reward[index]+= 1
-					else:
-						self.visited[(king.levels.current_level, king.y)] = self.visited.get((king.levels.current_level, king.y), 0) + 1
-						if self.visited[(king.levels.current_level, king.y)] < self.visited[(old_level, old_y)]:
-							self.visited[(king.levels.current_level, king.y)] = self.visited[(old_level, old_y)] + 1
+				#self.step_counter += 1
+				##################################################################################################
+				# Define the reward from environment                                                             #
+				##################################################################################################
+				if king.levels.current_level > old_level or (king.levels.current_level == old_level and king.y < old_y):
+					reward[index]+= 1
+				else:
+					self.visited[(king.levels.current_level, king.y)] = self.visited.get((king.levels.current_level, king.y), 0) + 1
+					if self.visited[(king.levels.current_level, king.y)] < self.visited[(old_level, old_y)]:
+						self.visited[(king.levels.current_level, king.y)] = self.visited[(old_level, old_y)] + 1
 
-						#king.reward+= -self.visited[(king.levels.current_level, king.y)]* 0.1 
-					####################################################################################################
-					if king.maxy < king.y:
-						king.update_max_y(king.y)
-						king.reward+= 0.1
-					if king.levels.current_level == old_level and king.y < old_y:
-						king.reward+=0.5
-					if king.levels.current_level > old_level:
-						king.reward+=1
-					if king.maxy == old_y: #penalize for staying on the same vertical spot i.e not jumping
-						king.reward+= -0.1
-
-			return reward
+					#king.reward+= -self.visited[(king.levels.current_level, king.y)]* 0.1 
+				####################################################################################################
+				if king.maxy < king.y:
+					king.update_max_y(king.y)
+					king.reward+= 0.1
+				if king.levels.current_level == old_level and king.y < old_y:
+					king.reward+=0.5
+				if king.levels.current_level > old_level:
+					king.reward+=1
+				if king.maxy == old_y: #penalize for staying on the same vertical spot i.e not jumping
+					king.reward+= -0.1
+			if king.maxy > king.y:
+				king.update_max_y(king.y)
+				print("Max Y: ", king.maxy)
+	
 
 	
 
@@ -361,7 +362,13 @@ def eval_genomes(genomes, config):
 		#5: 'space',
 	}        
 
-	env = JKGame(max_step=1000, n_kings=config.pop_size)
+
+	print("YEEEEEEEEEEEEEEET")
+	print(len(genomes))
+	print("YEEEEEEEEEEEEEEET")
+	
+
+	env = JKGame(max_step=1000, n_kings=len(genomes))
 	env.reset()
 
 	nets = []
@@ -390,12 +397,11 @@ def eval_genomes(genomes, config):
 		rewards = env.step(actions)
 
 		for index, genome in enumerate(genomes):
-			genome[1].fitness = 300-env.kings[index].maxy
+			if genome[1].fitness < (300-env.kings[index].maxy):
+				genome[1].fitness = (300-env.kings[index].maxy)
    			#genome[1].fitness = env.kings[index].reward
 			#genome[1].fitness = env.kings[index].reward
 	
-		
-
 
 def run(config_file):
 	config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_file)
@@ -405,6 +411,7 @@ def run(config_file):
 	p.add_reporter(neat.StdOutReporter(True))
 	stats = neat.StatisticsReporter()
 	p.add_reporter(stats)
+
 	
 	winner = p.run(eval_genomes, 100)
 
