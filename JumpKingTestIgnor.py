@@ -120,7 +120,7 @@ class JKGame:
 
 		return done, state
 
-	def move_available(self,king):
+	def move_available(self, king):
 		available = not king.isFalling \
 		and not king.levels.ending \
 		and (not king.isSplat or king.splatCount > king.splatDuration)
@@ -352,55 +352,37 @@ def get_surrounding_platforms(env, king):
 	surrounding_platforms += [(-1,-1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
 	return surrounding_platforms
 
-def eval_genomes(genomes, config):
-	# Environment Preparation
-	action_dict = {
-		0: 'right',
-		1: 'left',
-		2: 'right+space',
-		3: 'left+space',
-		#4: 'idle',
-		#5: 'space',
-	}        
-	previous_actions = actions
-
-	env = JKGame(max_step=1000, n_kings=len(genomes))
-	env.reset()
-
-	nets = []
-	for genome_id, genome in genomes:
-		genome.fitness = 0  # start with fitness level of 0
-		net = neat.nn.FeedForwardNetwork.create(genome, config)
-		nets.append(net)
-	actions = [] * len(genomes)
-	
-	# Actually doing some training	
-	n_ticks = 500
-	for counter in range(n_ticks):
-		actions = []
-		for index, king in enumerate(env.kings):
-			surrounding_platforms = [item for sublist in get_surrounding_platforms(env, king) for item in sublist]
-			king_state = [king.levels.current_level, king.jumpCount, previous_actions[index]]
-			inputs = surrounding_platforms + king_state
-			output = nets[env.kings.index(king)].activate(inputs)
-			action = output.index(max(output[0:4]))
-			actions[index] = action
-		env.step(actions)
-
-		for index, genome in enumerate(genomes):
-			if genome[1].fitness < (300-env.kings[index].maxy):
-				genome[1].fitness = (300-env.kings[index].maxy)
 	
 
-def generate_ml_move():
+def generate_ml_move(env, king, nets):
+	surrounding_platforms = [item for sublist in get_surrounding_platforms(env, king) for item in sublist]
+	king_state = [king.levels.current_level, king.jumpCount]
+	inputs = surrounding_platforms + king_state
+	output = nets[env.kings.index(king)].activate(inputs)
 	
-	pass
+	length = int(round(output[4] * 31))
+	number = output.index(max(output[0:4]))
+
+	alist = [number] * length
+	if number == 2:
+		alist.append(0)
+	elif number == 3:
+		alist.append(1)
+	else:
+		alist.append(4)
+	return alist
+
 
 def generate_random_move():
 	length = np.random.randint(1, 30)
 	number = random.randint(0, 3)
 	random_list = [number] * length
-	#random_list + 0
+	if number == 2:
+		random_list.append(0)
+	elif number == 3:
+		random_list.append(1)
+	else:
+		random_list.append(4)
 	return random_list
 	
 
@@ -428,6 +410,7 @@ def eval_genomes(genomes, config):
 		actions_queue.append([])
 	
 	actions = [0] * len(genomes)
+	
 	kings_move_count = [0] * len(genomes)
 
 	# Actually doing some training
@@ -440,13 +423,17 @@ def eval_genomes(genomes, config):
 				actions[index] = actions_queue[index].pop(0)
 
 			elif len(actions_queue[index]) == 0 and kings_move_count[index] < n_moves:
-				actions_queue[index] = generate_random_move()
-				actions[index] = actions_queue[index].pop(0)
-				kings_move_count[index] += 1
-				pass
+				if env.move_available(king):
+					#actions_queue[index] = generate_random_move()
+					actions_queue[index] = generate_ml_move(env, king, nets)
+					actions[index] = actions_queue[index].pop(0)
+					kings_move_count[index] += 1
+				else:
+					actions[index] = 4
 			
-			elif (len(actions_queue[index]) == 0) and (kings_move_count[index] >= n_moves): 
-				if all(kings_move_count >= n_moves for kings_move_count in kings_move_count):
+			elif (len(actions_queue[index]) == 0):
+				actions[index] = 4
+				if all(kings_move_count >= n_moves for kings_move_count in kings_move_count) and all(env.move_available(k) for k in env.kings):
 					toquit = True
 		
 		
@@ -454,8 +441,6 @@ def eval_genomes(genomes, config):
 		for index, genome in enumerate(genomes):
 			if genome[1].fitness < (300-env.kings[index].maxy):
 				genome[1].fitness = (300-env.kings[index].maxy)
-		
-		previous_actions = actions
 
 		if toquit:
 			break
