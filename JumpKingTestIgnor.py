@@ -28,11 +28,14 @@ import time
 import neat
 
 
+ignor = 0
 
 class JKGame:
 	""" Overall class to manga game aspects """
         
 	def __init__(self, n_kings, max_step=float('inf')):
+
+		global ignor
 
 		pygame.init()
 
@@ -48,10 +51,10 @@ class JKGame:
 
 		self.game_screen = pygame.Surface((int(os.environ.get("screen_width")), int(os.environ.get("screen_height"))), pygame.HWSURFACE|pygame.DOUBLEBUF)#|pygame.SRCALPHA)
 
-		print("ADD A BREAKPOINT HERE")
+		#print("ADD A BREAKPOINT HERE")
 
-		print(type(self.game_screen))
-		print(type(self.screen))
+		#print(type(self.game_screen))
+		#print(type(self.screen))
 		
 		self.game_screen_x = 0
 
@@ -60,7 +63,6 @@ class JKGame:
 		self.levels = Levels(self.game_screen)
 
 		#self.king = King(self.game_screen, self.levels)
-		
 		self.kings = []
 		for _ in range(n_kings):
 			self.kings.append(King(self.game_screen, self.levels))
@@ -80,7 +82,7 @@ class JKGame:
 		# 5: 'space',
 		} 
 		self.action_keys = list(self.action_dict.keys())  
-		
+		#print("BP 2")
 		self.env_started = 0
 
 		self.step_counter = 0
@@ -89,6 +91,8 @@ class JKGame:
 		self.visited = {}
 
 		pygame.display.set_caption('Jump King At Home XD')
+		#print("BP 3")
+
 
 	def reset(self):
 		
@@ -173,7 +177,7 @@ class JKGame:
 					king.reward+= -0.1
 			if king.maxy > king.y:
 				king.update_max_y(king.y)
-				print("Reward: ", 360-king.maxy)
+				#print("Reward: ", 360-king.maxy)
 	
 
 	
@@ -207,7 +211,7 @@ class JKGame:
 
 				self.menus.save()
 
-				sys.exit()
+				#sys.exit()
 
 			if event.type == pygame.KEYDOWN:
 
@@ -443,7 +447,10 @@ def eval_genomes(genomes, config):
 				genome[1].fitness = (360-env.kings[index].maxy)
 
 		if toquit:
+			for index, genome in enumerate(genomes):
+				print(f"King {index+1} Fitness: {genome[1].fitness}")
 			break
+
 
 
 def run(config_file):

@@ -32,7 +32,7 @@ class Background():
 
 		except pygame.error as e:
 			print(f'Unable To Load Image: {filename}')
-			raise SystemExit(e)
+			#raise SystemExit(e)
 
 		return image
 

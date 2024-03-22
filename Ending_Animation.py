@@ -161,8 +161,8 @@ class Ending_Animation:
 			else:
 
 				if self.end_counter > 3000:
-
-					sys.exit()
+					pass
+					#sys.exit()
 
 				return True
 				
