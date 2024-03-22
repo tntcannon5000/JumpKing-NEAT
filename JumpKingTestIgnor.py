@@ -173,7 +173,7 @@ class JKGame:
 					king.reward+= -0.1
 			if king.maxy > king.y:
 				king.update_max_y(king.y)
-				print("Max Y: ", king.maxy)
+				print("Reward: ", 360-king.maxy)
 	
 
 	
@@ -439,8 +439,8 @@ def eval_genomes(genomes, config):
 		
 		env.step(actions)
 		for index, genome in enumerate(genomes):
-			if genome[1].fitness < (300-env.kings[index].maxy):
-				genome[1].fitness = (300-env.kings[index].maxy)
+			if genome[1].fitness < (360-env.kings[index].maxy):
+				genome[1].fitness = (360-env.kings[index].maxy)
 
 		if toquit:
 			break
