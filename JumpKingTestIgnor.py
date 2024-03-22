@@ -27,6 +27,8 @@ import random
 import time
 import neat
 
+from multiprocessing import Process
+
 
 ignor = 0
 
@@ -61,8 +63,8 @@ class JKGame:
 		pygame.display.set_icon(pygame.image.load("images/sheets/JumpKingIcon.ico"))
 
 		self.levels = Levels(self.game_screen)
-
 		#self.king = King(self.game_screen, self.levels)
+
 		self.kings = []
 		for _ in range(n_kings):
 			self.kings.append(King(self.game_screen, self.levels))
@@ -215,7 +217,7 @@ class JKGame:
 
 			if event.type == pygame.KEYDOWN:
 
-				self.menus.check_events(event)
+				#self.menus.check_events(event)
 
 				if event.key == pygame.K_c:
 
@@ -400,7 +402,6 @@ def eval_genomes(genomes, config):
 		4: 'idle',
 		#5: 'space',
 	}        
-	
 
 	env = JKGame(max_step=100000, n_kings=len(genomes))
 	env.reset()
@@ -468,8 +469,38 @@ def run(config_file):
 	print('\nBest genome:\n{!s}'.format(winner))
 	print('\nTraining completed. Reason: {!s}'.format(p.stop_reason))
 
+
+
+
+
+def run_game():
+    run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
+
+def train_n_games(n_games):
+	processes = []
+	for i in range(n_games):
+		#run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
+		p = Process(target=run_game)
+		processes.append(p)
+	for p in processes:
+		p.start()
+	for p in processes:
+		p.join()
+
 if __name__ == "__main__":
-	#Game = JKGame()
-	#Game.running()
-	#train(1)
-	run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
+	train_n_games(1)
+# if __name__ == "__main__":
+#     p1 = Process(target=run_game)
+#     p2 = Process(target=run_game)
+
+#     p1.start()
+#     p2.start()
+
+#     p1.join()
+#     p2.join()
+
+# if __name__ == "__main__":
+# 	Game = JKGame(2)
+# 	Game.running()
+# 	#train(1)
+# 	run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
