@@ -64,7 +64,7 @@ class JKGame:
 
 		self.kings = []
 		for _ in range(n_kings):
-			self.kings.append(King(self.game_screen, self.levels_list))
+			self.kings.append(King(self.game_screen, self.levels_list, n_levels))
 
 		self.babe = Babe(self.game_screen, self.levels)
 
@@ -173,9 +173,10 @@ class JKGame:
 				# # 	king.reward+=1
 				# if king.maxy == old_y: #penalize for staying on the same vertical spot i.e not jumping
 				# 	king.reward+= -0.1
-				if king.maxy > king.y:
-					king.update_max_y(king.y)
-					print("Reward: ", 360-king.maxy)
+				pass
+			if king.maxy > king.y and self.move_available(king):
+				king.update_max_y(king.y)
+				print("Reward: ", 360-king.maxy)
 	
 
 	
