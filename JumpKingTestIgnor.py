@@ -52,18 +52,15 @@ class JKGame:
 		self.screen = pygame.display.set_mode((int(os.environ.get("screen_width")) * int(os.environ.get("window_scale")), int(os.environ.get("screen_height")) * int(os.environ.get("window_scale"))), pygame.HWSURFACE|pygame.DOUBLEBUF)#|pygame.SRCALPHA)
 
 		self.game_screen = pygame.Surface((int(os.environ.get("screen_width")), int(os.environ.get("screen_height"))), pygame.HWSURFACE|pygame.DOUBLEBUF)#|pygame.SRCALPHA)
-
-		#print("ADD A BREAKPOINT HERE")
-
-		#print(type(self.game_screen))
-		#print(type(self.screen))
 		
 		self.game_screen_x = 0
 
 		pygame.display.set_icon(pygame.image.load("images/sheets/JumpKingIcon.ico"))
 
-		self.levels = Levels(self.game_screen, init_level=0, n_levels=n_levels)
-		#self.king = King(self.game_screen, self.levels)
+		self.levelslist = []
+		for levelnum in range(n_levels):
+			self.levelslist.append(Levels(self.game_screen, init_level=levelnum, n_levels=n_levels))
+		self.levels = self.levelslist[0]
 
 		self.kings = []
 		for _ in range(n_kings):
@@ -255,7 +252,8 @@ class JKGame:
 
 		if os.environ["gaming"]:
 
-			self.levels.blit1()
+			for level1 in self.levelslist:
+				level1.blit1()
 
 		if os.environ["active"]:
 			for king in self.kings:
@@ -266,8 +264,9 @@ class JKGame:
 			self.babe.blitme()
 
 		if os.environ["gaming"]:
-
-			self.levels.blit2()
+			
+			for level2 in self.levelslist:
+				level2.blit2()
 
 		if os.environ["gaming"]:
 
@@ -403,7 +402,7 @@ def eval_genomes(genomes, config):
 		#5: 'space',
 	}        
 
-	env = JKGame(max_step=100000, n_kings=len(genomes), n_levels=1)
+	env = JKGame(max_step=100000, n_kings=len(genomes), n_levels=3)
 	env.reset()
 
 	nets = []
