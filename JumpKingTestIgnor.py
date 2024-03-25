@@ -64,7 +64,7 @@ class JKGame:
 
 		self.kings = []
 		for _ in range(n_kings):
-			self.kings.append(King(self.game_screen, self.levels))
+			self.kings.append(King(self.game_screen, self.levels_list))
 
 		self.babe = Babe(self.game_screen, self.levels)
 
@@ -148,7 +148,6 @@ class JKGame:
 		reward = [0] * len(self.kings)
 
 		for index,king in enumerate(self.kings):
-			old_level = king.levels.current_level
 			old_y = king.y
 			if self.move_available(king):
 					
@@ -165,18 +164,18 @@ class JKGame:
 
 				# 	#king.reward+= -self.visited[(king.levels.current_level, king.y)]* 0.1 
 				# ####################################################################################################
-				if king.maxy < king.y:
+				# if king.maxy < king.y:
+				# 	king.update_max_y(king.y)
+				# 	king.reward+= 0.1
+				# # if king.levels.current_level == old_level and king.y < old_y:
+				# # 	king.reward+=0.5
+				# # if king.levels.current_level > old_level:
+				# # 	king.reward+=1
+				# if king.maxy == old_y: #penalize for staying on the same vertical spot i.e not jumping
+				# 	king.reward+= -0.1
+				if king.maxy > king.y:
 					king.update_max_y(king.y)
-					king.reward+= 0.1
-				if king.levels.current_level == old_level and king.y < old_y:
-					king.reward+=0.5
-				if king.levels.current_level > old_level:
-					king.reward+=1
-				if king.maxy == old_y: #penalize for staying on the same vertical spot i.e not jumping
-					king.reward+= -0.1
-			if king.maxy > king.y:
-				king.update_max_y(king.y)
-				#print("Reward: ", 360-king.maxy)
+					print("Reward: ", 360-king.maxy)
 	
 
 	
@@ -361,7 +360,7 @@ def get_surrounding_platforms(env, king):
 
 def generate_ml_move(env, king, nets):
 	surrounding_platforms = [item for sublist in get_surrounding_platforms(env, king) for item in sublist]
-	king_state = [king.levels.current_level, king.jumpCount]
+	king_state = [king.jumpCount]
 	inputs = surrounding_platforms + king_state
 	output = nets[env.kings.index(king)].activate(inputs)
 	

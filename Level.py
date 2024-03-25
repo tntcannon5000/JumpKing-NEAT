@@ -331,7 +331,8 @@ class Levels:
 
 		except Exception as e:
 
-			print("UPDATENPCS ERROR:", e)
+			#print("UPDATENPCS ERROR:", e)
+			pass
 
 	def update_hiddenwalls(self, king):
 
