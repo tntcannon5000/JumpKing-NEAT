@@ -413,7 +413,7 @@ def eval_genomes(genomes, config):
 		net = neat.nn.FeedForwardNetwork.create(genome, config)
 		nets.append(net)
 		actions_queue.append([])
-	
+	 
 	actions = [0] * len(genomes)
 	
 	kings_move_count = [0] * len(genomes)
@@ -444,8 +444,7 @@ def eval_genomes(genomes, config):
 		
 		env.step(actions)
 		for index, genome in enumerate(genomes):
-			if genome[1].fitness < (360-env.kings[index].maxy):
-				genome[1].fitness = (360-env.kings[index].maxy)
+			genome[1].fitness = ((360*env.n_levels)-env.kings[index].maxy)
 
 		if toquit:
 			for index, genome in enumerate(genomes):
