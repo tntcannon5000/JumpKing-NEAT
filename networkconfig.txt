@@ -1,7 +1,7 @@
 [NEAT]
 fitness_criterion     = max
 fitness_threshold     = 10000
-pop_size              = 100
+pop_size              = 150
 reset_on_extinction   = False
 
 [DefaultGenome]
@@ -12,7 +12,7 @@ activation_options      = sigmoid tanh cube gauss identity relu
 
 # node aggregation options
 aggregation_default     = sum
-aggregation_mutate_rate = 0.0
+aggregation_mutate_rate = 0.8
 aggregation_options     = sum
 
 # node bias options
