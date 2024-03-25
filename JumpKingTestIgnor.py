@@ -40,12 +40,13 @@ class JKGame:
 		global ignor
 
 		pygame.init()
+		print("ignore")
 
 		self.environment = Environment(n_levels)
 
 		self.clock = pygame.time.Clock()
 
-		self.fps = int(os.environ.get("fps"))
+		self.fps = int(os.environ.get("fps")) 
 
 		self.bg_color = (0, 0, 0)
 
