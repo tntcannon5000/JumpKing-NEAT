@@ -12,7 +12,6 @@ class Rectangles:
 
 	def __init__(self, n_levels):
 		self.n_levels = n_levels
-		print("num levels: "+ str(n_levels))
 		self.levels = collections.defaultdict()
 
 		self.levels[0]	=	[(352, 185, 128, 175, 0, 0, False, False),
