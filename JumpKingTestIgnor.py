@@ -177,7 +177,6 @@ class JKGame:
 				pass
 			if king.maxy > king.y and self.move_available(king):
 				king.update_max_y(king.y)
-				print("Reward: ", (360*self.n_levels)-king.maxy)
 	
 
 	
@@ -403,7 +402,7 @@ def eval_genomes(genomes, config):
 		#5: 'space',
 	}        
 
-	env = JKGame(max_step=100000, n_kings=len(genomes), n_levels=3)
+	env = JKGame(max_step=100000, n_kings=len(genomes), n_levels=2)
 	env.reset()
 
 	nets = []
