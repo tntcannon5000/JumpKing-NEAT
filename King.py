@@ -252,6 +252,10 @@ class King():
 
 				self._check_events(agentCommand)
 
+			elif self.levels.ending:
+
+				self._robot_check_events(command)
+
 			self._update_audio1()
 
 			self._update_particles()
@@ -268,7 +272,7 @@ class King():
 
 			self._update_audio2()
 
-			#self._check_level()
+			self._check_level()
 
 			self._update_timer()
 
@@ -278,7 +282,7 @@ class King():
 
 			self._creative()
 
-			#self._check_level()
+			self._check_level()
 
 			self._update_sprites()
 
@@ -526,6 +530,7 @@ class King():
 		self.collideRamp = False
 		self.slip = 0
 		self.slope = 0
+
 
 		for platform in self.levels.levels[self.levels.current_level].platforms: # TO DO
 
@@ -823,19 +828,19 @@ class King():
 
 			self.speed *= self.slip
 
-	# def _check_level(self):
+	def _check_level(self):
 
-	# 	if self.rect_y < 0 and self.levels.current_level < self.levels.max_level:
+		if self.rect_y < 0 and self.levels.current_level < self.levels.max_level:
 
-	# 		self.rect_y += self.screen.get_height() + self.rect_width
-	# 		self.levels.current_level += 0
-	# 		self.level_change += 0
+			self.rect_y += self.screen.get_height() + self.rect_width
+			self.levels.current_level += 0
+			self.level_change += 0
 
-	# 	if self.rect_y > self.screen.get_height():
+		if self.rect_y > self.screen.get_height():
 
-	# 		self.rect_y -= self.screen.get_height() + self.rect_width
-	# 		self.levels.current_level -= 0
-	# 		self.level_change -= 0
+			self.rect_y -= self.screen.get_height() + self.rect_width
+			self.levels.current_level -= 0
+			self.level_change -= 0
 
 	def _walk(self, direction):
 

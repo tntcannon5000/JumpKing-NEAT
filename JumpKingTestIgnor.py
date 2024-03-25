@@ -40,13 +40,12 @@ class JKGame:
 		global ignor
 
 		pygame.init()
-		print("ignore")
 
 		self.environment = Environment(n_levels)
 
 		self.clock = pygame.time.Clock()
 
-		self.fps = int(os.environ.get("fps")) 
+		self.fps = int(os.environ.get("fps"))
 
 		self.bg_color = (0, 0, 0)
 
@@ -58,10 +57,10 @@ class JKGame:
 
 		pygame.display.set_icon(pygame.image.load("images/sheets/JumpKingIcon.ico"))
 
-		self.levelslist = []
+		self.levels_list = []
 		for levelnum in range(n_levels):
-			self.levelslist.append(Levels(self.game_screen, init_level=levelnum, n_levels=n_levels))
-		self.levels = self.levelslist[0]
+			self.levels_list.append(Levels(self.game_screen, init_level=levelnum, n_levels=n_levels))
+		self.levels = self.levels_list[0]
 
 		self.kings = []
 		for _ in range(n_kings):
@@ -99,7 +98,7 @@ class JKGame:
 		for king in self.kings:
 			king.reset()
 
-		self.levels.reset()
+		# self.levels.reset()
 		os.environ["start"] = "1"
 		os.environ["gaming"] = "1" 
 		os.environ["pause"] = ""
@@ -111,10 +110,11 @@ class JKGame:
 		done = False
 		
 		for king in self.kings:
-			state = [king.levels.current_level, king.x, king.y, king.jumpCount]
+			for level in self.levels_list:
+				# state = [king.levels.current_level, king.x, king.y, king.jumpCount]
 
-			self.visited = {}
-			self.visited[(king.levels.current_level, king.y)] = 1    
+				self.visited = {}
+				self.visited[(level, king.y)] = 1    
 		
 		# self.king.reset()
 		# state = [self.king.levels.current_level, self.king.x, self.king.y, self.king.jumpCount]
@@ -122,11 +122,10 @@ class JKGame:
 		# self.visited = {}
 		# self.visited[(self.king.levels.current_level, self.king.y)] = 1
 
-		return done, state
+		return done
 
 	def move_available(self, king):
 		available = not king.isFalling \
-		and not king.levels.ending \
 		and (not king.isSplat or king.splatCount > king.splatDuration)
 		return available
 
@@ -253,7 +252,7 @@ class JKGame:
 
 		if os.environ["gaming"]:
 
-			for level1 in self.levelslist:
+			for level1 in self.levels_list:
 				level1.blit1()
 
 		if os.environ["active"]:
@@ -266,7 +265,7 @@ class JKGame:
 
 		if os.environ["gaming"]:
 			
-			for level2 in self.levelslist:
+			for level2 in self.levels_list:
 				level2.blit2()
 
 		if os.environ["gaming"]:
