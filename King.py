@@ -62,10 +62,10 @@ class King():
 
 	""" represents the king """
 
-	def __init__(self, screen, levels_list):
+	def __init__(self, screen, levels_list, n_levels):
 
 		# Static 
-
+		self.n_levels = n_levels
 		self.screen = screen
 		
 		self.sprites = King_Sprites().king_images
@@ -138,7 +138,7 @@ class King():
 
 		# Animation
 
-		self.x, self.y = 230, 298
+		self.x, self.y = 230, 298+(360*(self.n_levels-1))
 
 		self.maxy = self.y
 
@@ -1156,6 +1156,8 @@ class King():
 
 
 	def reset(self):
+		
+		self.n_levels = self.n_levels
 
 		self.isWalk = False
 
@@ -1212,7 +1214,7 @@ class King():
 
 		# Animation
 
-		self.x, self.y = 230, 298
+		self.x, self.y = 230, 298+(360*(self.n_levels-1))
 
 		self.width, self.height = 32, 32
 
