@@ -806,8 +806,6 @@ class Rectangles:
 		for i in range(len(self.levels)-1):
 			for j in range(len(self.levels[i])):
 				x, y, width, height, slope, slip, support, snow = self.levels[i][j]
-				print("Old y: " + str(y))
-				print("New y: " + str(y+(360*(n_levels-1-i))))
 				self.levels[i][j] = (x, y+(360*(n_levels-1-i)), width, height, slope, slip, support, snow)
 
 

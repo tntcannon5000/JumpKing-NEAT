@@ -532,7 +532,7 @@ class King():
 		self.slope = 0
 
 
-		for platform in self.levels.levels[self.levels.current_level].platforms: # TO DO
+		for platform in self.levels.levels[self.levels.current_level].platforms: # TO DO: pass list of all platform not just level 0
 
 			if not platform.slope:
 
