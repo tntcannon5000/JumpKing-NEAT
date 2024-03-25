@@ -63,12 +63,13 @@ class Level:
 
 class Levels:
 
-	def __init__(self, screen):
+	def __init__(self, screen, init_level):
 
 		self.max_level = 42
 
-		self.current_level = 0
-
+		self.current_level = init_level
+		self.reset_level = init_level
+		
 		self.current_level_name = None
 
 		self.screen = screen
@@ -450,7 +451,7 @@ class Levels:
 
 	def reset(self):
 
-		self.current_level = 0
+		self.current_level = self.reset_level
 
 		self.wind.__init__(self.screen)
 

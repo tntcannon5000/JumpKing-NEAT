@@ -248,7 +248,7 @@ class King():
 
 		if os.environ.get("mode") == "normal":
 
-			if not self.isFalling and not self.levels.ending:
+			if not self.isFalling:
 
 				self._check_events(agentCommand)
 
@@ -531,7 +531,7 @@ class King():
 		self.slip = 0
 		self.slope = 0
 
-		for platform in self.levels.levels[self.levels.current_level].platforms:
+		for platform in self.levels.levels[self.levels.current_level].platforms: # TO DO
 
 			if not platform.slope:
 
@@ -832,14 +832,14 @@ class King():
 		if self.rect_y < 0 and self.levels.current_level < self.levels.max_level:
 
 			self.rect_y += self.screen.get_height() + self.rect_width
-			self.levels.current_level += 1
-			self.level_change += 1
+			self.levels.current_level += 0
+			self.level_change += 0
 
 		if self.rect_y > self.screen.get_height():
 
 			self.rect_y -= self.screen.get_height() + self.rect_width
-			self.levels.current_level -= 1
-			self.level_change -= 1
+			self.levels.current_level -= 0
+			self.level_change -= 0
 
 	def _walk(self, direction):
 
