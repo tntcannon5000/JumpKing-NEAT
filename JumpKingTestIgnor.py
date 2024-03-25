@@ -402,7 +402,7 @@ def eval_genomes(genomes, config):
 		#5: 'space',
 	}        
 
-	env = JKGame(max_step=100000, n_kings=len(genomes), n_levels=3)
+	env = JKGame(max_step=100000, n_kings=len(genomes), n_levels=2)
 	env.reset()
 
 	nets = []
