@@ -63,7 +63,7 @@ class Level:
 
 class Levels:
 
-	def __init__(self, screen, init_level):
+	def __init__(self, screen, init_level, n_levels):
 
 		self.max_level = 42
 
@@ -76,7 +76,7 @@ class Levels:
 
 		# Objects
 
-		self.platforms = Platforms()
+		self.platforms = Platforms(self.current_level, n_levels)
 
 		self.background = Backgrounds("BG").backgrounds
 

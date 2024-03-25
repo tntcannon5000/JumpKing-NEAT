@@ -35,13 +35,13 @@ ignor = 0
 class JKGame:
 	""" Overall class to manga game aspects """
         
-	def __init__(self, n_kings, max_step=float('inf')):
+	def __init__(self, n_kings, n_levels, max_step=float('inf')):
 
 		global ignor
 
 		pygame.init()
 
-		self.environment = Environment()
+		self.environment = Environment(n_levels)
 
 		self.clock = pygame.time.Clock()
 
@@ -62,9 +62,10 @@ class JKGame:
 
 		pygame.display.set_icon(pygame.image.load("images/sheets/JumpKingIcon.ico"))
 
-		self.levels = Levels(self.game_screen, 5)
+		self.levels = Levels(self.game_screen, init_level=0, n_levels=n_levels)
+		self.levels2 = Levels(self.game_screen, init_level=1, n_levels=n_levels)
 		#self.king = King(self.game_screen, self.levels)
-		
+
 		self.kings = []
 		for _ in range(n_kings):
 			self.kings.append(King(self.game_screen, self.levels))
@@ -403,7 +404,7 @@ def eval_genomes(genomes, config):
 		#5: 'space',
 	}        
 
-	env = JKGame(max_step=100000, n_kings=len(genomes))
+	env = JKGame(max_step=100000, n_kings=len(genomes), n_levels=2)
 	env.reset()
 
 	nets = []

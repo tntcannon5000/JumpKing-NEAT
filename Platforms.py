@@ -11,7 +11,7 @@ import os
 class Rectangles:
 
 	def __init__(self):
-
+		
 		self.levels = collections.defaultdict()
 
 		self.levels[0]	=	[(352, 185, 128, 175, 0, 0, False, False),
@@ -804,9 +804,9 @@ class Rectangles:
 
 class Platform():
 
-	def __init__(self, x, y, width, height, slope = False, slip = False, support = False, snow = False):
+	def __init__(self, x, y, width, height, init_level, n_levels, slope = False, slip = False, support = False, snow = False):
 
-		self.x, self.y, self.width, self.height = x, y, width, height
+		self.x, self.y, self.width, self.height = x, y+360*((n_levels-1) - init_level), width, height
 
 		self.type = "Land"
 
@@ -841,15 +841,18 @@ class Platform():
 
 class Platforms():
 
-	def __init__(self):
+	def __init__(self, init_level, n_levels):
 
 		self.rectangles = Rectangles()
+
+		self.init_level = init_level
+		self.n_levels = n_levels
 
 	def platforms(self, level):
 
 		try:
 
-			return [Platform(*rectangle) for rectangle in self.rectangles.levels[level]]
+			return [Platform(*rectangle, self.init_level, self.n_levels) for rectangle in self.rectangles.levels[level]]
 
 		except:
 
