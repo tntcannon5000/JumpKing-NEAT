@@ -63,7 +63,6 @@ class JKGame:
 		pygame.display.set_icon(pygame.image.load("images/sheets/JumpKingIcon.ico"))
 
 		self.levels = Levels(self.game_screen, init_level=0, n_levels=n_levels)
-		self.levels2 = Levels(self.game_screen, init_level=1, n_levels=n_levels)
 		#self.king = King(self.game_screen, self.levels)
 
 		self.kings = []
@@ -404,7 +403,7 @@ def eval_genomes(genomes, config):
 		#5: 'space',
 	}        
 
-	env = JKGame(max_step=100000, n_kings=len(genomes), n_levels=2)
+	env = JKGame(max_step=100000, n_kings=len(genomes), n_levels=1)
 	env.reset()
 
 	nets = []

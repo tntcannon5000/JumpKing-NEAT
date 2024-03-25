@@ -13,7 +13,7 @@ class Environment:
 	def __init__(self, n_levels):
 
 		os.environ["hitboxes"] = ""
-		os.environ["screen_width"], os.environ["screen_height"] = str(480), str(360*n_levels)
+		os.environ["screen_width"], os.environ["screen_height"] = str(480), str(360*2)
 		os.environ["window_scale"] = "1"
 		os.environ["fps"] = str(60)
 		os.environ["bg_color"] = str((0, 0, 0))

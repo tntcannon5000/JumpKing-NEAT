@@ -21,15 +21,23 @@ class Rectangles:
 							(8, 291, 65, 69, 0, 0, False, False),
 							(73, 330, 55, 30, 0, 0, False, False),
 							(0, 0, 8, 360, 0, 0, False, False),
-							(472, 0, 8, 360, 0, 0, False, False)]
+							(472, 0, 8, 360, 0, 0, False, False),
+       						
+             				(296, 629, 95, 38, 0, 0, False, False),
+							(409, 557, 71, 35, 0, 0, False, False),
+							(255, 559, 74, 33, 0, 0, False, False),
+							(119, 463, 74, 65, 0, 0, False, False),
+							(0, 440, 81, 86, 0, 0, False, False),
+							(0, 360, 8, 360, 0, 0, False, False),
+							(472, 360, 8, 360, 0, 0, False, False)]
 
-		self.levels[1]	=	[(296, 296, 95, 38, 0, 0, False, False),
-							(409, 197, 71, 35, 0, 0, False, False),
-							(255, 199, 74, 33, 0, 0, False, False),
-							(119, 103, 74, 65, 0, 0, False, False),
-							(0, 80, 81, 86, 0, 0, False, False),
-							(0, 0, 8, 360, 0, 0, False, False),
-							(472, 0, 8, 360, 0, 0, False, False)]
+		# self.levels[1]	=	[(296, 296, 95, 38, 0, 0, False, False),
+		# 					(409, 197, 71, 35, 0, 0, False, False),
+		# 					(255, 199, 74, 33, 0, 0, False, False),
+		# 					(119, 103, 74, 65, 0, 0, False, False),
+		# 					(0, 80, 81, 86, 0, 0, False, False),
+		# 					(0, 0, 8, 360, 0, 0, False, False),
+		# 					(472, 0, 8, 360, 0, 0, False, False)]
 
 		self.levels[2]	=	[(137, 0, 70, 14, 0, 0, False, False),
 							(0, 98, 63, 12, 0, 0, False, False),
