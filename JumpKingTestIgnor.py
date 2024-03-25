@@ -62,9 +62,9 @@ class JKGame:
 
 		pygame.display.set_icon(pygame.image.load("images/sheets/JumpKingIcon.ico"))
 
-		self.levels = Levels(self.game_screen)
+		self.levels = Levels(self.game_screen, 5)
 		#self.king = King(self.game_screen, self.levels)
-
+		
 		self.kings = []
 		for _ in range(n_kings):
 			self.kings.append(King(self.game_screen, self.levels))
@@ -468,10 +468,6 @@ def run(config_file):
 
 	print('\nBest genome:\n{!s}'.format(winner))
 	print('\nTraining completed. Reason: {!s}'.format(p.stop_reason))
-
-
-
-
 
 def run_game():
     run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
