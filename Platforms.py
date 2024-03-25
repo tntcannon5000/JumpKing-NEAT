@@ -806,7 +806,8 @@ class Platform():
 
 	def __init__(self, x, y, width, height, init_level, n_levels, slope = False, slip = False, support = False, snow = False):
 
-		self.x, self.y, self.width, self.height = x, y+360*((n_levels-1) - init_level), width, height
+		self.x, self.y, self.width, self.height = x, y, width, height
+		#+360*((n_levels-1) - init_level) add this to y
 
 		self.type = "Land"
 
