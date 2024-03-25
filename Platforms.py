@@ -14,14 +14,14 @@ class Rectangles:
 		
 		self.levels = collections.defaultdict()
 
-		self.levels[0]	=	[(352, 185, 128, 175, 0, 0, False, False),
-							(185, 40, 110, 50, 0, 0, False, False),
-							(128, 330, 224, 30, 0, 0, False, False),
-							(8, 184, 120, 107, 0, 0, False, False),
-							(8, 291, 65, 69, 0, 0, False, False),
-							(73, 330, 55, 30, 0, 0, False, False),
-							(0, 0, 8, 360, 0, 0, False, False),
-							(472, 0, 8, 360, 0, 0, False, False)]
+		self.levels[0]	=	[(352, 185+360, 128, 175, 0, 0, False, False),
+							(185, 40+360, 110, 50, 0, 0, False, False),
+							(128, 330+360, 224, 30, 0, 0, False, False),
+							(8, 184+360, 120, 107, 0, 0, False, False),
+							(8, 291+360, 65, 69, 0, 0, False, False),
+							(73, 330+360, 55, 30, 0, 0, False, False),
+							(0, 0+360, 8, 360, 0, 0, False, False),
+							(472, 0+360, 8, 360, 0, 0, False, False)]
 
 		self.levels[1]	=	[(296, 296, 95, 38, 0, 0, False, False),
 							(409, 197, 71, 35, 0, 0, False, False),
