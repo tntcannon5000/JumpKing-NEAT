@@ -531,14 +531,8 @@ class King():
 		self.slip = 0
 		self.slope = 0
 
-		
-		platform_list = self.levels.levels[self.levels.current_level].platforms
-		platform_list2 = self.levels.levels[(self.levels.current_level)+1].platforms
 
-		#platform_list = platform_list.append(platform_list2)
-
-
-		for platform in platform_list2: # TO DO
+		for platform in self.levels.levels[self.levels.current_level].platforms: # TO DO
 
 			if not platform.slope:
 
