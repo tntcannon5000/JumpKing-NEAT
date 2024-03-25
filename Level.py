@@ -71,6 +71,7 @@ class Levels:
 		self.reset_level = init_level
 		
 		self.current_level_name = None
+		self.n_levels = n_levels
 
 		self.screen = screen
 
@@ -78,11 +79,14 @@ class Levels:
 
 		self.platforms = Platforms(self.current_level, n_levels)
 
-		self.background = Backgrounds("BG").backgrounds
+		print("current level: ", str(self.current_level) + "    " + str(360*((self.n_levels-1)-self.current_level)))
 
-		self.midground = Backgrounds("MG").backgrounds
 
-		self.foreground = Backgrounds("FG").backgrounds
+		self.background = Backgrounds("BG", self.current_level, n_levels).backgrounds
+
+		self.midground = Backgrounds("MG", self.current_level, n_levels).backgrounds
+
+		self.foreground = Backgrounds("FG", self.current_level, n_levels).backgrounds
 
 		self.props = Props().props
 
