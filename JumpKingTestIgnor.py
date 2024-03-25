@@ -215,7 +215,7 @@ class JKGame:
 
 			if event.type == pygame.KEYDOWN:
 
-				self.menus.check_events(event)
+				# self.menus.check_events(event)
 
 				if event.key == pygame.K_c:
 
