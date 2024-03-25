@@ -39,7 +39,7 @@ class Constructor():
 		self.pressed = False
 
 
-		self.font = pygame.font.Font("flappyfont.ttf", 10)
+		self.font = pygame.font.SysFont(None, 32)
 
 	def check_events(self):
 

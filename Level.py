@@ -63,25 +63,30 @@ class Level:
 
 class Levels:
 
-	def __init__(self, screen):
+	def __init__(self, screen, init_level, n_levels):
 
 		self.max_level = 42
 
-		self.current_level = 0
-
+		self.current_level = init_level
+		self.reset_level = init_level
+		
 		self.current_level_name = None
+		self.n_levels = n_levels
 
 		self.screen = screen
 
 		# Objects
 
-		self.platforms = Platforms()
+		self.platforms = Platforms(self.current_level, n_levels)
 
-		self.background = Backgrounds("BG").backgrounds
+		print("current level: ", str(self.current_level) + "    " + str(360*((self.n_levels-1)-self.current_level)))
 
-		self.midground = Backgrounds("MG").backgrounds
 
-		self.foreground = Backgrounds("FG").backgrounds
+		self.background = Backgrounds("BG", self.current_level, n_levels).backgrounds
+
+		self.midground = Backgrounds("MG", self.current_level, n_levels).backgrounds
+
+		self.foreground = Backgrounds("FG", self.current_level, n_levels).backgrounds
 
 		self.props = Props().props
 
@@ -450,7 +455,7 @@ class Levels:
 
 	def reset(self):
 
-		self.current_level = 0
+		self.current_level = self.reset_level
 
 		self.wind.__init__(self.screen)
 

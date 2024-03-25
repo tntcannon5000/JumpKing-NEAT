@@ -27,19 +27,21 @@ import random
 import time
 import neat
 
+from multiprocessing import Process
+
 
 ignor = 0
 
 class JKGame:
 	""" Overall class to manga game aspects """
         
-	def __init__(self, n_kings, max_step=float('inf')):
+	def __init__(self, n_kings, n_levels, max_step=float('inf')):
 
 		global ignor
 
 		pygame.init()
 
-		self.environment = Environment()
+		self.environment = Environment(n_levels)
 
 		self.clock = pygame.time.Clock()
 
@@ -50,19 +52,16 @@ class JKGame:
 		self.screen = pygame.display.set_mode((int(os.environ.get("screen_width")) * int(os.environ.get("window_scale")), int(os.environ.get("screen_height")) * int(os.environ.get("window_scale"))), pygame.HWSURFACE|pygame.DOUBLEBUF)#|pygame.SRCALPHA)
 
 		self.game_screen = pygame.Surface((int(os.environ.get("screen_width")), int(os.environ.get("screen_height"))), pygame.HWSURFACE|pygame.DOUBLEBUF)#|pygame.SRCALPHA)
-
-		#print("ADD A BREAKPOINT HERE")
-
-		#print(type(self.game_screen))
-		#print(type(self.screen))
 		
 		self.game_screen_x = 0
 
 		pygame.display.set_icon(pygame.image.load("images/sheets/JumpKingIcon.ico"))
 
-		self.levels = Levels(self.game_screen)
+		self.levelslist = []
+		for levelnum in range(n_levels):
+			self.levelslist.append(Levels(self.game_screen, init_level=levelnum, n_levels=n_levels))
+		self.levels = self.levelslist[0]
 
-		#self.king = King(self.game_screen, self.levels)
 		self.kings = []
 		for _ in range(n_kings):
 			self.kings.append(King(self.game_screen, self.levels))
@@ -215,7 +214,7 @@ class JKGame:
 
 			if event.type == pygame.KEYDOWN:
 
-				# self.menus.check_events(event)
+				#self.menus.check_events(event)
 
 				if event.key == pygame.K_c:
 
@@ -253,7 +252,8 @@ class JKGame:
 
 		if os.environ["gaming"]:
 
-			self.levels.blit1()
+			for level1 in self.levelslist:
+				level1.blit1()
 
 		if os.environ["active"]:
 			for king in self.kings:
@@ -264,8 +264,9 @@ class JKGame:
 			self.babe.blitme()
 
 		if os.environ["gaming"]:
-
-			self.levels.blit2()
+			
+			for level2 in self.levelslist:
+				level2.blit2()
 
 		if os.environ["gaming"]:
 
@@ -400,9 +401,8 @@ def eval_genomes(genomes, config):
 		4: 'idle',
 		#5: 'space',
 	}        
-	
 
-	env = JKGame(max_step=100000, n_kings=len(genomes))
+	env = JKGame(max_step=100000, n_kings=len(genomes), n_levels=3)
 	env.reset()
 
 	nets = []
@@ -468,8 +468,34 @@ def run(config_file):
 	print('\nBest genome:\n{!s}'.format(winner))
 	print('\nTraining completed. Reason: {!s}'.format(p.stop_reason))
 
+def run_game():
+    run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
+
+def train_n_games(n_games):
+	processes = []
+	for i in range(n_games):
+		#run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
+		p = Process(target=run_game)
+		processes.append(p)
+	for p in processes:
+		p.start()
+	for p in processes:
+		p.join()
+
 if __name__ == "__main__":
-	#Game = JKGame()
-	#Game.running()
-	#train(1)
-	run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
+	train_n_games(1)
+# if __name__ == "__main__":
+#     p1 = Process(target=run_game)
+#     p2 = Process(target=run_game)
+
+#     p1.start()
+#     p2.start()
+
+#     p1.join()
+#     p2.join()
+
+# if __name__ == "__main__":
+# 	Game = JKGame(2)
+# 	Game.running()
+# 	#train(1)
+# 	run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
