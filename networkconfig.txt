@@ -8,7 +8,7 @@ reset_on_extinction   = False
 # node activation options
 activation_default      = sigmoid
 activation_mutate_rate  = 0.00
-activation_options      = sigmoid tanh cube gauss identity relu 
+activation_options      = sigmoid
 
 # node aggregation options
 aggregation_default     = sum

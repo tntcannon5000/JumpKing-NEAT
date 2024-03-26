@@ -142,44 +142,16 @@ class JKGame:
 				if not self.move_available(king):
 					actions[i] = None
 			self._update_gamestuff(actions=actions)
-			
+			if self.move_available(king):
+				if king.maxy > king.y and self.move_available(king):
+					king.update_max_y(king.y)
+					# print("Reward: ", (360*self.n_levels)-king.maxy)
 		self._update_gamescreen()
 		self._update_guistuff()
 		self._update_audio()
 		pygame.display.update()
 		reward = [0] * len(self.kings)
 
-		for index,king in enumerate(self.kings):
-			old_y = king.y
-			if self.move_available(king):
-					
-				# #self.step_counter += 1
-				# ##################################################################################################
-				# # Define the reward from environment                                                             #
-				# ##################################################################################################
-				# if king.levels.current_level > old_level or (king.levels.current_level == old_level and king.y < old_y):
-				# 	reward[index]+= 1
-				# else:
-				# 	self.visited[(king.levels.current_level, king.y)] = self.visited.get((king.levels.current_level, king.y), 0) + 1
-				# 	if self.visited[(king.levels.current_level, king.y)] < self.visited[(old_level, old_y)]:
-				# 		self.visited[(king.levels.current_level, king.y)] = self.visited[(old_level, old_y)] + 1
-
-				# 	#king.reward+= -self.visited[(king.levels.current_level, king.y)]* 0.1 
-				# ####################################################################################################
-				# if king.maxy < king.y:
-				# 	king.update_max_y(king.y)
-				# 	king.reward+= 0.1
-				# # if king.levels.current_level == old_level and king.y < old_y:
-				# # 	king.reward+=0.5
-				# # if king.levels.current_level > old_level:
-				# # 	king.reward+=1
-				# if king.maxy == old_y: #penalize for staying on the same vertical spot i.e not jumping
-				# 	king.reward+= -0.1
-				pass
-			if king.maxy > king.y and self.move_available(king):
-				king.update_max_y(king.y)
-				# print("Reward: ", (360*self.n_levels)-king.maxy)
-	
 
 	
 
@@ -367,7 +339,7 @@ def get_surrounding_platforms(env, king):
 	for platform in env.levels.levels[env.levels.current_level].platforms: 
 		# Calculate relative distances to the king
 		relative_x,relative_y,distance_to_platform = calculate_distance(king, platform)
-		if abs(relative_x) <= zone_of_vision_size_x and abs(relative_y) <= zone_of_vision_size_y and relative_y >0: 
+		if abs(relative_x) <= king.x+zone_of_vision_size_x and abs(relative_y) <= king.y+zone_of_vision_size_y and relative_y >0: 
 			surrounding_platforms.append((relative_x, relative_y,distance_to_platform))
 
 	# Pad out the surrounding_platforms list with Max_platform_levels - len(surrounding_platforms) values
