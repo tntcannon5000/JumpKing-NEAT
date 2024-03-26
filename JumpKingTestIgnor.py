@@ -3,6 +3,7 @@
 # Game Screen
 # 
 
+import math
 import pygame 
 import sys
 import os
@@ -342,19 +343,34 @@ class JKGame:
 
 			pygame.mixer.Channel(channel).set_volume(float(os.environ.get("volume")))
 
+def calculate_distance(king, platform):
+    #Ignore the side walls as we do not need them
+	closest_x = min(abs(platform.x-king.x),abs(platform.x + platform.width-king.x))
+	if platform.width <= 8 :
+		distance = 1000
+		closest_y = 1000
+	# Find the closest point on the platform rectangle to the king
+	else :
+		
+		closest_y = min(abs(platform.y-king.y),abs(platform.y + platform.height-king.y))
+
+		# Calculate the distance between the king and the closest point
+		distance = math.sqrt(closest_x ** 2 + closest_y ** 2)
+	return closest_x,closest_y,distance
+
 def get_surrounding_platforms(env, king):
-	zone_of_vision_size = 100  # Adjust as needed
+	zone_of_vision_size_x = 480  # Adjust as needed
+	zone_of_vision_size_y = 360
 	surrounding_platforms = []
 	MAX_PLATFORM_LEVELS = 40
 	for platform in env.levels.levels[env.levels.current_level].platforms: 
 		# Calculate relative distances to the king
-		relative_x = (platform.x - king.x)#/472
-		relative_y = (platform.y - king.y)#/344
-		if abs(relative_x) <= zone_of_vision_size and abs(relative_y) <= zone_of_vision_size: 
-			surrounding_platforms.append((relative_x, relative_y))
+		relative_x,relative_y,distance_to_platform = calculate_distance(king, platform)
+		if abs(relative_x) <= zone_of_vision_size_x and abs(relative_y) <= zone_of_vision_size_y and relative_y >0: 
+			surrounding_platforms.append((relative_x, relative_y,distance_to_platform))
 
 	# Pad out the surrounding_platforms list with Max_platform_levels - len(surrounding_platforms) values
-	surrounding_platforms += [(-1,-1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
+	surrounding_platforms += [(-1,-1,-1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
 	return surrounding_platforms
 
 	
@@ -446,8 +462,8 @@ def eval_genomes(genomes, config):
 			genome[1].fitness = ((360*env.n_levels)-env.kings[index].maxy)
 
 		if toquit:
-			for index, genome in enumerate(genomes):
-				print(f"King {index+1} Fitness: {genome[1].fitness}")
+			# for index, genome in enumerate(genomes):
+			# 	print(f"King {index+1} Fitness: {genome[1].fitness}")
 			break
 
 
@@ -470,16 +486,16 @@ def run(config_file):
 def run_game():
     run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
 
-def train_n_games(n_games):
-	processes = []
-	for i in range(n_games):
-		#run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
-		p = Process(target=run_game)
-		processes.append(p)
-	for p in processes:
-		p.start()
-	for p in processes:
-		p.join()
+# def train_n_games(n_games):
+# 	processes = []
+# 	for i in range(n_games):
+# 		#run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
+# 		p = Process(target=run_game)
+# 		processes.append(p)
+# 	for p in processes:
+# 		p.start()
+# 	for p in processes:
+# 		p.join()
 
 # if __name__ == "__main__":
 # train_n_games(1)
@@ -497,4 +513,4 @@ if __name__ == "__main__":
 # 	Game = JKGame(2)
 # 	Game.running()
 # 	#train(1)
-	run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
+ 	run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
