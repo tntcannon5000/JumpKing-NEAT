@@ -178,7 +178,6 @@ class JKGame:
 				pass
 			if king.maxy > king.y and self.move_available(king):
 				king.update_max_y(king.y)
-				# print("Reward: ", (360*self.n_levels)-king.maxy)
 	
 
 	
@@ -417,7 +416,8 @@ def eval_genomes(genomes, config):
 		3: 'left+space',
 		4: 'idle',
 		#5: 'space',
-	}
+	}        
+
 	env = JKGame(max_step=100000, n_kings=len(genomes), n_levels=2)
 	env.reset()
 
@@ -428,10 +428,10 @@ def eval_genomes(genomes, config):
 		net = neat.nn.FeedForwardNetwork.create(genome, config)
 		nets.append(net)
 		actions_queue.append([])
-	 
+
 	actions = [0] * len(genomes)
 	
-	kings_move_count = [0] * len(genomes) #a
+	kings_move_count = [0] * len(genomes)
 
 	# Actually doing some training
 	n_moves = 8
@@ -459,7 +459,7 @@ def eval_genomes(genomes, config):
 		
 		env.step(actions)
 		for index, genome in enumerate(genomes):
-			genome[1].fitness = ((360*env.n_levels)-env.kings[index].maxy)
+			genome[1].fitness = env.kings[index].reward
 
 		if toquit:
 			# for index, genome in enumerate(genomes):
@@ -497,8 +497,8 @@ def run_game():
 # 	for p in processes:
 # 		p.join()
 
-if __name__ == "__main__":
-#	train_n_games(1)
+# if __name__ == "__main__":
+# train_n_games(1)
 # if __name__ == "__main__":
 #     p1 = Process(target=run_game)
 #     p2 = Process(target=run_game)
@@ -509,8 +509,9 @@ if __name__ == "__main__":
 #     p1.join()
 #     p2.join()
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
 # 	Game = JKGame(2)
 # 	Game.running()
 # 	#train(1)
  	run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
+# 	#run_game()
