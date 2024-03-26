@@ -412,7 +412,7 @@ def eval_genomes(genomes, config):
 		net = neat.nn.FeedForwardNetwork.create(genome, config)
 		nets.append(net)
 		actions_queue.append([])
-	 
+
 	actions = [0] * len(genomes)
 	
 	kings_move_count = [0] * len(genomes)
@@ -481,8 +481,8 @@ def train_n_games(n_games):
 	for p in processes:
 		p.join()
 
-if __name__ == "__main__":
-	train_n_games(1)
+# if __name__ == "__main__":
+# train_n_games(1)
 # if __name__ == "__main__":
 #     p1 = Process(target=run_game)
 #     p2 = Process(target=run_game)
@@ -493,8 +493,8 @@ if __name__ == "__main__":
 #     p1.join()
 #     p2.join()
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
 # 	Game = JKGame(2)
 # 	Game.running()
 # 	#train(1)
-# 	run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
+	run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
