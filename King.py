@@ -80,6 +80,8 @@ class King():
 
 		self.jumpAngles = {'up' : 0, 'left' : -math.pi/3, 'right' : math.pi/3}
 
+		self.collision_penalty = 1
+
 		# Booleans
 
 		self.isWalk = False
@@ -410,9 +412,9 @@ class King():
 
 	def update_max_y(self, newy):
 		self.maxy = newy
+		self.reward += 100
 
 	def _collide_right(self, platform):
-
 		rect = self.rect
 
 		if (
@@ -430,7 +432,6 @@ class King():
 			return False
 
 	def _collide_left(self, platform):
-
 		rect = self.rect
 
 		if (
@@ -533,6 +534,7 @@ class King():
 				if not platform.slope:
 
 					if self._collide_left(platform):
+						self.reward -= self.collision_penalty
 
 						self.rect_x = platform.rect.right
 						self.lastCollision = platform
@@ -540,6 +542,7 @@ class King():
 						self.collideRight = True
 
 					elif self._collide_right(platform):
+						self.reward -= self.collision_penalty
 
 						self.rect_x = platform.rect.left - self.rect_width
 						self.lastCollision = platform
@@ -547,6 +550,8 @@ class King():
 						self.collideLeft = True
 
 					elif self._collide_top(platform):
+						self.reward -= self.collision_penalty
+
 						self.rect_y = platform.rect.bottom
 						self.lastCollision = platform
 						self.collideTop = True
@@ -581,6 +586,7 @@ class King():
 							rel_x = self.rect_x + self.rect_width - platform.rect.left
 
 							if self._collide_left(platform):
+								self.reward -= self.collision_penalty
 
 								self.rect_x = platform.rect.right
 								self.lastCollision = platform
@@ -588,6 +594,7 @@ class King():
 								self.collideRight = True
 
 							elif self._collide_right(platform) and self.rect_y + self.rect_height > platform.rect.bottom:
+								self.reward -= self.collision_penalty
 
 								self.rect_x = platform.rect.left - self.rect_width
 								self.lastCollision = platform
@@ -595,6 +602,7 @@ class King():
 								self.collideLeft = True
 
 							elif self._collide_top(platform):
+								self.reward -= self.collision_penalty
 
 								self.rect_y = platform.rect.bottom
 								self.lastCollision = platform
@@ -628,6 +636,7 @@ class King():
 							rel_x = platform.rect.right - self.rect_x
 
 							if self._collide_right(platform):
+								self.reward -= self.collision_penalty
 
 								self.rect_x = platform.rect.left - self.rect_width
 								self.lastCollision = platform
@@ -635,6 +644,7 @@ class King():
 								self.collideLeft = True
 
 							elif self._collide_left(platform) and self.rect_y + self.rect_height > platform.rect.bottom:
+								self.reward -= self.collision_penalty
 
 								self.rect_x = platform.rect.right
 								self.lastCollision = platform
@@ -642,6 +652,7 @@ class King():
 								self.collideRight = True
 
 							elif self._collide_top(platform):
+								self.reward -= self.collision_penalty
 
 								self.rect_y = platform.bottom
 								self.lastCollision = platform
@@ -677,6 +688,7 @@ class King():
 							rel_x = self.rect_x + self.rect_width - platform.rect.left
 
 							if self._collide_left(platform):
+								self.reward -= self.collision_penalty
 
 								self.rect_x = platform.rect.right
 								self.lastCollision = platform
@@ -684,6 +696,7 @@ class King():
 								self.collideRight = True
 
 							elif self._collide_right(platform) and self.rect_y < platform.rect.top:
+								self.reward -= self.collision_penalty
 
 								self.rect_x = platform.rect.left - self.rect_width
 								self.lastCollision = platform
@@ -717,6 +730,7 @@ class King():
 							rel_x = platform.rect.right - self.rect_x
 
 							if self._collide_right(platform):
+								self.reward -= self.collision_penalty
 
 								self.rect_x = platform.rect.left - self.rect_width
 								self.lastCollision = platform
@@ -724,6 +738,7 @@ class King():
 								self.collideLeft = True
 
 							elif self._collide_left(platform) and self.rect_y < platform.rect.top:
+								self.reward -= self.collision_penalty
 
 								self.rect_x = platform.rect.right
 								self.lastCollision = platform

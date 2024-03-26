@@ -459,7 +459,7 @@ def eval_genomes(genomes, config):
 		
 		env.step(actions)
 		for index, genome in enumerate(genomes):
-			genome[1].fitness = ((360*env.n_levels)-env.kings[index].maxy)
+			genome[1].fitness = env.kings[index].reward
 
 		if toquit:
 			# for index, genome in enumerate(genomes):
