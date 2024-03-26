@@ -3,6 +3,7 @@
 # Game Screen
 # 
 
+import math
 import pygame 
 import sys
 import os
@@ -39,6 +40,7 @@ class JKGame:
 
 		global ignor
 
+		self.n_levels = n_levels
 		pygame.init()
 
 		self.environment = Environment(n_levels)
@@ -57,14 +59,14 @@ class JKGame:
 
 		pygame.display.set_icon(pygame.image.load("images/sheets/JumpKingIcon.ico"))
 
-		self.levelslist = []
+		self.levels_list = []
 		for levelnum in range(n_levels):
-			self.levelslist.append(Levels(self.game_screen, init_level=levelnum, n_levels=n_levels))
-		self.levels = self.levelslist[0]
+			self.levels_list.append(Levels(self.game_screen, init_level=levelnum, n_levels=n_levels))
+		self.levels = self.levels_list[0]
 
 		self.kings = []
 		for _ in range(n_kings):
-			self.kings.append(King(self.game_screen, self.levels))
+			self.kings.append(King(self.game_screen, self.levels_list, n_levels))
 
 		self.babe = Babe(self.game_screen, self.levels)
 
@@ -98,7 +100,7 @@ class JKGame:
 		for king in self.kings:
 			king.reset()
 
-		self.levels.reset()
+		# self.levels.reset()
 		os.environ["start"] = "1"
 		os.environ["gaming"] = "1" 
 		os.environ["pause"] = ""
@@ -110,10 +112,11 @@ class JKGame:
 		done = False
 		
 		for king in self.kings:
-			state = [king.levels.current_level, king.x, king.y, king.jumpCount]
+			for level in self.levels_list:
+				# state = [king.levels.current_level, king.x, king.y, king.jumpCount]
 
-			self.visited = {}
-			self.visited[(king.levels.current_level, king.y)] = 1    
+				self.visited = {}
+				self.visited[(level, king.y)] = 1    
 		
 		# self.king.reset()
 		# state = [self.king.levels.current_level, self.king.x, self.king.y, self.king.jumpCount]
@@ -121,11 +124,10 @@ class JKGame:
 		# self.visited = {}
 		# self.visited[(self.king.levels.current_level, self.king.y)] = 1
 
-		return done, state
+		return done
 
 	def move_available(self, king):
 		available = not king.isFalling \
-		and not king.levels.ending \
 		and (not king.isSplat or king.splatCount > king.splatDuration)
 		return available
 
@@ -148,7 +150,6 @@ class JKGame:
 		reward = [0] * len(self.kings)
 
 		for index,king in enumerate(self.kings):
-			old_level = king.levels.current_level
 			old_y = king.y
 			if self.move_available(king):
 					
@@ -165,18 +166,19 @@ class JKGame:
 
 				# 	#king.reward+= -self.visited[(king.levels.current_level, king.y)]* 0.1 
 				# ####################################################################################################
-				if king.maxy < king.y:
-					king.update_max_y(king.y)
-					king.reward+= 0.1
-				if king.levels.current_level == old_level and king.y < old_y:
-					king.reward+=0.5
-				if king.levels.current_level > old_level:
-					king.reward+=1
-				if king.maxy == old_y: #penalize for staying on the same vertical spot i.e not jumping
-					king.reward+= -0.1
-			if king.maxy > king.y:
+				# if king.maxy < king.y:
+				# 	king.update_max_y(king.y)
+				# 	king.reward+= 0.1
+				# # if king.levels.current_level == old_level and king.y < old_y:
+				# # 	king.reward+=0.5
+				# # if king.levels.current_level > old_level:
+				# # 	king.reward+=1
+				# if king.maxy == old_y: #penalize for staying on the same vertical spot i.e not jumping
+				# 	king.reward+= -0.1
+				pass
+			if king.maxy > king.y and self.move_available(king):
 				king.update_max_y(king.y)
-				#print("Reward: ", 360-king.maxy)
+				# print("Reward: ", (360*self.n_levels)-king.maxy)
 	
 
 	
@@ -252,7 +254,7 @@ class JKGame:
 
 		if os.environ["gaming"]:
 
-			for level1 in self.levelslist:
+			for level1 in self.levels_list:
 				level1.blit1()
 
 		if os.environ["active"]:
@@ -265,7 +267,7 @@ class JKGame:
 
 		if os.environ["gaming"]:
 			
-			for level2 in self.levelslist:
+			for level2 in self.levels_list:
 				level2.blit2()
 
 		if os.environ["gaming"]:
@@ -342,26 +344,41 @@ class JKGame:
 
 			pygame.mixer.Channel(channel).set_volume(float(os.environ.get("volume")))
 
+def calculate_distance(king, platform):
+    #Ignore the side walls as we do not need them
+	closest_x = min(abs(platform.x-king.x),abs(platform.x + platform.width-king.x))
+	if platform.width <= 8 :
+		distance = 1000
+		closest_y = 1000
+	# Find the closest point on the platform rectangle to the king
+	else :
+		
+		closest_y = min(abs(platform.y-king.y),abs(platform.y + platform.height-king.y))
+
+		# Calculate the distance between the king and the closest point
+		distance = math.sqrt(closest_x ** 2 + closest_y ** 2)
+	return closest_x,closest_y,distance
+
 def get_surrounding_platforms(env, king):
-	zone_of_vision_size = 100  # Adjust as needed
+	zone_of_vision_size_x = 480  # Adjust as needed
+	zone_of_vision_size_y = 360
 	surrounding_platforms = []
 	MAX_PLATFORM_LEVELS = 40
 	for platform in env.levels.levels[env.levels.current_level].platforms: 
 		# Calculate relative distances to the king
-		relative_x = (platform.x - king.x)#/472
-		relative_y = (platform.y - king.y)#/344
-		if abs(relative_x) <= zone_of_vision_size and abs(relative_y) <= zone_of_vision_size: 
-			surrounding_platforms.append((relative_x, relative_y))
+		relative_x,relative_y,distance_to_platform = calculate_distance(king, platform)
+		if abs(relative_x) <= zone_of_vision_size_x and abs(relative_y) <= zone_of_vision_size_y and relative_y >0: 
+			surrounding_platforms.append((relative_x, relative_y,distance_to_platform))
 
 	# Pad out the surrounding_platforms list with Max_platform_levels - len(surrounding_platforms) values
-	surrounding_platforms += [(-1,-1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
+	surrounding_platforms += [(-1,-1,-1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
 	return surrounding_platforms
 
 	
 
 def generate_ml_move(env, king, nets):
 	surrounding_platforms = [item for sublist in get_surrounding_platforms(env, king) for item in sublist]
-	king_state = [king.levels.current_level, king.jumpCount]
+	king_state = [king.jumpCount]
 	inputs = surrounding_platforms + king_state
 	output = nets[env.kings.index(king)].activate(inputs)
 	
@@ -400,9 +417,8 @@ def eval_genomes(genomes, config):
 		3: 'left+space',
 		4: 'idle',
 		#5: 'space',
-	}        
-
-	env = JKGame(max_step=100000, n_kings=len(genomes), n_levels=3)
+	}
+	env = JKGame(max_step=100000, n_kings=len(genomes), n_levels=2)
 	env.reset()
 
 	nets = []
@@ -412,7 +428,7 @@ def eval_genomes(genomes, config):
 		net = neat.nn.FeedForwardNetwork.create(genome, config)
 		nets.append(net)
 		actions_queue.append([])
-	
+	 
 	actions = [0] * len(genomes)
 	
 	kings_move_count = [0] * len(genomes)
@@ -443,12 +459,11 @@ def eval_genomes(genomes, config):
 		
 		env.step(actions)
 		for index, genome in enumerate(genomes):
-			if genome[1].fitness < (360-env.kings[index].maxy):
-				genome[1].fitness = (360-env.kings[index].maxy)
+			genome[1].fitness = ((360*env.n_levels)-env.kings[index].maxy)
 
 		if toquit:
-			for index, genome in enumerate(genomes):
-				print(f"King {index+1} Fitness: {genome[1].fitness}")
+			# for index, genome in enumerate(genomes):
+			# 	print(f"King {index+1} Fitness: {genome[1].fitness}")
 			break
 
 
@@ -471,19 +486,19 @@ def run(config_file):
 def run_game():
     run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
 
-def train_n_games(n_games):
-	processes = []
-	for i in range(n_games):
-		#run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
-		p = Process(target=run_game)
-		processes.append(p)
-	for p in processes:
-		p.start()
-	for p in processes:
-		p.join()
+# def train_n_games(n_games):
+# 	processes = []
+# 	for i in range(n_games):
+# 		#run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
+# 		p = Process(target=run_game)
+# 		processes.append(p)
+# 	for p in processes:
+# 		p.start()
+# 	for p in processes:
+# 		p.join()
 
 if __name__ == "__main__":
-	train_n_games(1)
+#	train_n_games(1)
 # if __name__ == "__main__":
 #     p1 = Process(target=run_game)
 #     p2 = Process(target=run_game)
@@ -498,4 +513,4 @@ if __name__ == "__main__":
 # 	Game = JKGame(2)
 # 	Game.running()
 # 	#train(1)
-# 	run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
+ 	run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))

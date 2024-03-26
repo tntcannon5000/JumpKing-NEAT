@@ -10,8 +10,8 @@ import os
 
 class Rectangles:
 
-	def __init__(self):
-		
+	def __init__(self, n_levels):
+		self.n_levels = n_levels
 		self.levels = collections.defaultdict()
 
 		self.levels[0]	=	[(352, 185, 128, 175, 0, 0, False, False),
@@ -21,23 +21,15 @@ class Rectangles:
 							(8, 291, 65, 69, 0, 0, False, False),
 							(73, 330, 55, 30, 0, 0, False, False),
 							(0, 0, 8, 360, 0, 0, False, False),
-							(472, 0, 8, 360, 0, 0, False, False),
-       						
-             				(296, 629, 95, 38, 0, 0, False, False),
-							(409, 557, 71, 35, 0, 0, False, False),
-							(255, 559, 74, 33, 0, 0, False, False),
-							(119, 463, 74, 65, 0, 0, False, False),
-							(0, 440, 81, 86, 0, 0, False, False),
-							(0, 360, 8, 360, 0, 0, False, False),
-							(472, 360, 8, 360, 0, 0, False, False)]
+							(472, 0, 8, 360, 0, 0, False, False)]
 
-		# self.levels[1]	=	[(296, 296, 95, 38, 0, 0, False, False),
-		# 					(409, 197, 71, 35, 0, 0, False, False),
-		# 					(255, 199, 74, 33, 0, 0, False, False),
-		# 					(119, 103, 74, 65, 0, 0, False, False),
-		# 					(0, 80, 81, 86, 0, 0, False, False),
-		# 					(0, 0, 8, 360, 0, 0, False, False),
-		# 					(472, 0, 8, 360, 0, 0, False, False)]
+		self.levels[1]	=	[(296, 296, 95, 38, 0, 0, False, False),
+							(409, 197, 71, 35, 0, 0, False, False),
+							(255, 199, 74, 33, 0, 0, False, False),
+							(119, 103, 74, 65, 0, 0, False, False),
+							(0, 80, 81, 86, 0, 0, False, False),
+							(0, 0, 8, 360, 0, 0, False, False),
+							(472, 0, 8, 360, 0, 0, False, False)]
 
 		self.levels[2]	=	[(137, 0, 70, 14, 0, 0, False, False),
 							(0, 98, 63, 12, 0, 0, False, False),
@@ -809,12 +801,19 @@ class Rectangles:
 							(336, 264, 32, 96, 0, 0, False, False),
 							(368, 144, 63, 7, 0, 0, False, False),
 							(425, 128, 6, 16, 0, 0, False, False)]
+		
+		for i in range(len(self.levels)-1):
+			for j in range(len(self.levels[i])):
+				x, y, width, height, slope, slip, support, snow = self.levels[i][j]
+				self.levels[i][j] = (x, y+(360*(n_levels-1-i)), width, height, slope, slip, support, snow)
+
 
 class Platform():
 
 	def __init__(self, x, y, width, height, init_level, n_levels, slope = False, slip = False, support = False, snow = False):
 
-		self.x, self.y, self.width, self.height = x, y+360*((n_levels-1) - init_level), width, height
+		self.x, self.y, self.width, self.height = x, y, width, height
+		#+360*((n_levels-1) - init_level) add this to y
 
 		self.type = "Land"
 
@@ -851,7 +850,7 @@ class Platforms():
 
 	def __init__(self, init_level, n_levels):
 
-		self.rectangles = Rectangles()
+		self.rectangles = Rectangles(n_levels)
 
 		self.init_level = init_level
 		self.n_levels = n_levels
