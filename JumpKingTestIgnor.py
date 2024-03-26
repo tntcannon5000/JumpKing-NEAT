@@ -431,7 +431,7 @@ def eval_genomes(genomes, config):
 	 
 	actions = [0] * len(genomes)
 	
-	kings_move_count = [0] * len(genomes)
+	kings_move_count = [0] * len(genomes) #a
 
 	# Actually doing some training
 	n_moves = 8
