@@ -5,7 +5,6 @@
 #
 
 import pygame
-import collections
 import os
 import math
 import sys
@@ -88,11 +87,15 @@ class Levels:
 
 		self.foreground = Backgrounds("FG", self.current_level, n_levels).backgrounds
 
+		print("backgrounds loaded!")
+
 		self.props = Props().props
 
 		self.weather = Weathers().weather
 
 		self.hiddenwalls = HiddenWalls().hiddenwalls
+
+		print("hiddenwalls loaded!")
 
 		self.scrollers = Scrollers()
 
@@ -106,6 +109,8 @@ class Levels:
 
 		self.Ending_Animation = Ending_Animation()
 
+		print("ending loaded!")
+
 		# Audio
 
 		self.background_audio = BackgroundAudio().level_audio
@@ -115,6 +120,8 @@ class Levels:
 		for channel in self.channels:
 
 			channel.set_volume(1.0)
+
+		print("audio loaded!")
 
 		# Movement 
 
@@ -126,7 +133,10 @@ class Levels:
 
 		self.levels = {}
 
+
+		print("about to load levels!")
 		self._load_levels()
+		print("levels loaded!")
 
 		# Ending
 

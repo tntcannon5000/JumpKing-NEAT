@@ -6,7 +6,6 @@
 
 import pygame
 import collections
-import os
 
 class Rectangles:
 
