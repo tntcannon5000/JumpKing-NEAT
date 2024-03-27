@@ -323,7 +323,7 @@ def calculate_distance(king, platform):
 	closest_x = min(abs(platform.x-king.x),abs(platform.x + platform.width-king.x))
 	if platform.width <= 8 :
 		distance = 1000
-		closest_y = 1000
+		closest_y = 0
 	# Find the closest point on the platform rectangle to the king
 	else :
 		
@@ -342,18 +342,17 @@ def get_surrounding_platforms(env, king):
 		# Calculate relative distances to the king
 		relative_x,relative_y,distance_to_platform = calculate_distance(king, platform)
 		if abs(relative_x) <= king.x+zone_of_vision_size_x and abs(relative_y) <= king.y+zone_of_vision_size_y: 
-			surrounding_platforms.append((relative_x, relative_y,distance_to_platform))
+			surrounding_platforms.append((relative_x, relative_y))
 
 	# Pad out the surrounding_platforms list with Max_platform_levels - len(surrounding_platforms) values
-	surrounding_platforms += [(-1,-1,-1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
+	surrounding_platforms += [(-1,-1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
 	return surrounding_platforms
 
 	
 
 def generate_ml_move(env, king, nets):
 	surrounding_platforms = [item for sublist in get_surrounding_platforms(env, king) for item in sublist]
-	king_state = [king.jumpCount]
-	inputs = surrounding_platforms + king_state
+	inputs = surrounding_platforms
 	output = nets[env.kings.index(king)].activate(inputs)
 	
 	length = int(round(output[4] * 31))
@@ -379,7 +378,6 @@ def generate_random_move():
 		random_list.append(1)
 	else:
 		random_list.append(4)
-		print("IDLE CHOSEN : after random list : "+str(random_list)+"number chosen : "+str(number))
 	return random_list
 	
 
@@ -435,7 +433,6 @@ def eval_genomes(genomes, config):
 					kings_move_count[index] += 1
 				else:
 					actions[index] = 4
-					print("IDLE CHOSEN : after moves run out: "+str(actions[index]))
 			
 			elif (len(actions_queue[index]) == 0):
 				kings_finished_list[index] = 1
