@@ -80,7 +80,13 @@ class King():
 
 		self.jumpAngles = {'up' : 0, 'left' : -math.pi/3, 'right' : math.pi/3}
 
-		self.collision_penalty = 1
+		self.collision_penalty = 5
+
+		self.new_platform_reward = 200
+
+		self.maxy_reward = 100
+
+		self.landed_platforms = []
 
 		# Booleans
 
@@ -412,7 +418,7 @@ class King():
 
 	def update_max_y(self, newy):
 		self.maxy = newy
-		self.reward += 100
+		self.reward += self.maxy_reward
 
 	def _collide_right(self, platform):
 		rect = self.rect
@@ -474,6 +480,9 @@ class King():
 			and round(self.rect_y + self.rect_height - platform.rect.top, 4) <= math.ceil(-math.cos(self.angle) * self.speed)
 			#and round(-math.cos(self.angle), 4) > 0
 		):
+			if platform not in self.landed_platforms:
+				self.reward += self.new_platform_reward
+				self.landed_platforms.append(platform)
 			return True
 		else:
 			return False

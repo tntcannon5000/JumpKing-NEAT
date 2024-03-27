@@ -30,15 +30,14 @@ import neat
 
 from multiprocessing import Process
 
+generation = 0
+n_moves = 8
 
-ignor = 0
 
 class JKGame:
 	""" Overall class to manga game aspects """
         
 	def __init__(self, n_kings, n_levels, max_step=float('inf')):
-
-		global ignor
 
 		self.n_levels = n_levels
 		pygame.init()
@@ -369,7 +368,7 @@ def get_surrounding_platforms(env, king):
 	for platform in env.levels.levels[env.levels.current_level].platforms: 
 		# Calculate relative distances to the king
 		relative_x,relative_y,distance_to_platform = calculate_distance(king, platform)
-		if abs(relative_x) <= king.x+zone_of_vision_size_x and abs(relative_y) <= king.y+zone_of_vision_size_y and relative_y >0: 
+		if abs(relative_x) <= king.x+zone_of_vision_size_x and abs(relative_y) <= king.y+zone_of_vision_size_y: 
 			surrounding_platforms.append((relative_x, relative_y,distance_to_platform))
 
 	# Pad out the surrounding_platforms list with Max_platform_levels - len(surrounding_platforms) values
@@ -412,6 +411,9 @@ def generate_random_move():
 	
 
 def eval_genomes(genomes, config):
+
+	global generation
+	global n_moves
 	# Environment Preparation
 	action_dict = {
 		0: 'right',
@@ -438,9 +440,13 @@ def eval_genomes(genomes, config):
 	kings_move_count = [0] * len(genomes)
 
 	# Actually doing some training
-	n_moves = 8
+	if generation % 5 == 0:
+		n_moves += (int(generation/5)*5)
 	running = True
 	toquit = False
+	print("Generation: " + str(generation))
+	print("Number of Moves: " + str(n_moves))
+	generation += 1
 	while True:
 		for index, king in enumerate(env.kings):
 			if len(actions_queue[index]) > 0:
@@ -471,7 +477,6 @@ def eval_genomes(genomes, config):
 			# for index, genome in enumerate(genomes):
 			# 	print(f"King {index+1} Fitness: {genome[1].fitness}")
 			break
-
 
 
 def run(config_file):
@@ -519,4 +524,4 @@ if __name__ == "__main__":
 # 	Game = JKGame(2)
 # 	Game.running()
 # 	#train(1)
- 	run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
+	run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
