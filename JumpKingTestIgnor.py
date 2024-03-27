@@ -365,7 +365,7 @@ def get_surrounding_platforms(env, king):
 	for platform in env.levels.levels[env.levels.current_level].platforms: 
 		# Calculate relative distances to the king
 		relative_x,relative_y,distance_to_platform = calculate_distance(king, platform)
-		if abs(relative_x) <= king.x+zone_of_vision_size_x and abs(relative_y) <= king.y+zone_of_vision_size_y and relative_y >0: 
+		if abs(relative_x) <= king.x+zone_of_vision_size_x and abs(relative_y) <= king.y+zone_of_vision_size_y: 
 			surrounding_platforms.append((relative_x, relative_y,distance_to_platform))
 
 	# Pad out the surrounding_platforms list with Max_platform_levels - len(surrounding_platforms) values
