@@ -3,42 +3,22 @@
 # Game Screen
 # 
 
+import gc
 import math
 import pygame 
-import sys
 import os
-import inspect
-import pickle
 import numpy as np
 from environment import Environment
-from spritesheet import SpriteSheet
-from Background import Backgrounds
 from King import King
 from Babe import Babe
 from Level import Levels
-from Menu import Menus
-
-from Start import Start
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
 import random
-import time
 import neat
-
-from multiprocessing import Process
-
-
-ignor = 0
 
 class JKGame:
 	""" Overall class to manga game aspects """
         
 	def __init__(self, n_kings, n_levels, max_step=float('inf')):
-
-		global ignor
 
 		self.n_levels = n_levels
 		pygame.init()
@@ -136,51 +116,43 @@ class JKGame:
 		#old_y = (self.king.levels.max_level - self.king.levels.current_level) * 360 + self.king.y
 		self.clock.tick(self.fps)
 		self._check_events()
-		if not os.environ["pause"]:
-				
-			for i, king in enumerate(self.kings):
-				if not self.move_available(king):
-					actions[i] = None
-			self._update_gamestuff(actions=actions)
+		#if not os.environ["pause"]:	To do if we want to do it xd
+		self._update_gamestuff(actions=actions)
 			
 		self._update_gamescreen()
 		self._update_guistuff()
 		self._update_audio()
 		pygame.display.update()
-		reward = [0] * len(self.kings)
 
 		for index,king in enumerate(self.kings):
-			old_y = king.y
-			if self.move_available(king):
+			# old_y = king.y
+			# if self.move_available(king):
 					
-				# #self.step_counter += 1
-				# ##################################################################################################
-				# # Define the reward from environment                                                             #
-				# ##################################################################################################
-				# if king.levels.current_level > old_level or (king.levels.current_level == old_level and king.y < old_y):
-				# 	reward[index]+= 1
-				# else:
-				# 	self.visited[(king.levels.current_level, king.y)] = self.visited.get((king.levels.current_level, king.y), 0) + 1
-				# 	if self.visited[(king.levels.current_level, king.y)] < self.visited[(old_level, old_y)]:
-				# 		self.visited[(king.levels.current_level, king.y)] = self.visited[(old_level, old_y)] + 1
+			# 	# #self.step_counter += 1
+			# 	# ##################################################################################################
+			# 	# # Define the reward from environment                                                             #
+			# 	# ##################################################################################################
+			# 	# if king.levels.current_level > old_level or (king.levels.current_level == old_level and king.y < old_y):
+			# 	# 	reward[index]+= 1
+			# 	# else:
+			# 	# 	self.visited[(king.levels.current_level, king.y)] = self.visited.get((king.levels.current_level, king.y), 0) + 1
+			# 	# 	if self.visited[(king.levels.current_level, king.y)] < self.visited[(old_level, old_y)]:
+			# 	# 		self.visited[(king.levels.current_level, king.y)] = self.visited[(old_level, old_y)] + 1
 
-				# 	#king.reward+= -self.visited[(king.levels.current_level, king.y)]* 0.1 
-				# ####################################################################################################
-				# if king.maxy < king.y:
-				# 	king.update_max_y(king.y)
-				# 	king.reward+= 0.1
-				# # if king.levels.current_level == old_level and king.y < old_y:
-				# # 	king.reward+=0.5
-				# # if king.levels.current_level > old_level:
-				# # 	king.reward+=1
-				# if king.maxy == old_y: #penalize for staying on the same vertical spot i.e not jumping
-				# 	king.reward+= -0.1
-				pass
+			# 	# 	#king.reward+= -self.visited[(king.levels.current_level, king.y)]* 0.1 
+			# 	# ####################################################################################################
+			# 	# if king.maxy < king.y:
+			# 	# 	king.update_max_y(king.y)
+			# 	# 	king.reward+= 0.1
+			# 	# # if king.levels.current_level == old_level and king.y < old_y:
+			# 	# # 	king.reward+=0.5
+			# 	# # if king.levels.current_level > old_level:
+			# 	# # 	king.reward+=1
+			# 	# if king.maxy == old_y: #penalize for staying on the same vertical spot i.e not jumping
+			# 	# 	king.reward+= -0.1
+			# 	pass
 			if king.maxy > king.y and self.move_available(king):
 				king.update_max_y(king.y)
-	
-
-	
 
 	def running(self):
 		"""
@@ -432,10 +404,10 @@ def eval_genomes(genomes, config):
 	actions = [0] * len(genomes)
 	
 	kings_move_count = [0] * len(genomes)
+	kings_finished_list = [0] * len(genomes)
 
 	# Actually doing some training
 	n_moves = 8
-	running = True
 	toquit = False
 	while True:
 		for index, king in enumerate(env.kings):
@@ -452,9 +424,11 @@ def eval_genomes(genomes, config):
 					actions[index] = 4
 			
 			elif (len(actions_queue[index]) == 0):
+				kings_finished_list[index] = 1
 				actions[index] = 4
-				if all(kings_move_count >= n_moves for kings_move_count in kings_move_count) and all(env.move_available(k) for k in env.kings):
-					toquit = True
+				if sum(kings_finished_list) >= len(env.kings)-1:
+					if all(kings_move_count >= n_moves for kings_move_count in kings_move_count) and all(env.move_available(k) for k in env.kings):
+						toquit = True
 		
 		
 		env.step(actions)
@@ -464,6 +438,46 @@ def eval_genomes(genomes, config):
 		if toquit:
 			# for index, genome in enumerate(genomes):
 			# 	print(f"King {index+1} Fitness: {genome[1].fitness}")
+			for level in env.levels_list:
+				del level.background_audio
+				del level.channels
+				del level.background
+				del level.foreground
+				del level.midground
+				del level.platforms
+				del level.props
+				del level.wind
+				del level.npcs
+				del level.flyers
+				del level.readables
+				del level.Ending_Animation
+				del level.levels
+				del level.weather
+				del level.hiddenwalls
+				del level.scrollers
+				del level
+				gc.collect()
+
+			for king in env.kings:
+				del king.screen
+				del king.levels_list
+				del king.timer
+				del king.sprites
+				del king.mask
+				del king.maxy
+				del king.reward
+				del king.channel
+				del king.audio
+				del king
+				gc.collect()
+
+			del env.levels_list
+			del env.levels
+			del env.kings
+			del env.babe
+			del env
+
+			gc.collect()
 			break
 
 

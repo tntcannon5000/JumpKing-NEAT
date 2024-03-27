@@ -6,9 +6,7 @@
 
 import pygame
 import math
-import collections
 import os
-import numpy
 import random
 from Timer import Timer
 from physics import Physics
@@ -61,7 +59,7 @@ def get_action_dict(agentCommand):
 class King():
 
 	""" represents the king """
-
+	
 	def __init__(self, screen, levels_list, n_levels):
 
 		# Static 
