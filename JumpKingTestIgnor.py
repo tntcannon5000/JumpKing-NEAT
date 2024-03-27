@@ -14,6 +14,7 @@ from Babe import Babe
 from Level import Levels
 import random
 import neat
+import cProfile
 
 generation = 0
 n_moves = 8
@@ -31,7 +32,7 @@ class JKGame:
 
 		self.clock = pygame.time.Clock()
 
-		self.fps = int(os.environ.get("fps"))
+		self.fps = 60
 
 		self.bg_color = (0, 0, 0)
 
@@ -44,13 +45,11 @@ class JKGame:
 		pygame.display.set_icon(pygame.image.load("images/sheets/JumpKingIcon.ico"))
 
 		self.levels_list = []
-		for levelnum in range(n_levels):
-			self.levels_list.append(Levels(self.game_screen, init_level=levelnum, n_levels=n_levels))
+		self.levels_list = [Levels(self.game_screen, init_level=levelnum, n_levels=n_levels) for levelnum in range(n_levels)]
 		self.levels = self.levels_list[0]
 
 		self.kings = []
-		for _ in range(n_kings):
-			self.kings.append(King(self.game_screen, self.levels_list, n_levels))
+		self.kings = [King(self.game_screen, self.levels_list, n_levels) for _ in range(n_kings)]
 
 		self.babe = Babe(self.game_screen, self.levels)
 
@@ -84,7 +83,7 @@ class JKGame:
 		for king in self.kings:
 			king.reset()
 
-		# self.levels.reset()
+		#self.levels.reset()
 		os.environ["start"] = "1"
 		os.environ["gaming"] = "1" 
 		os.environ["pause"] = ""
@@ -128,32 +127,6 @@ class JKGame:
 		pygame.display.update()
 
 		for index,king in enumerate(self.kings):
-			# old_y = king.y
-			# if self.move_available(king):
-					
-			# 	# #self.step_counter += 1
-			# 	# ##################################################################################################
-			# 	# # Define the reward from environment                                                             #
-			# 	# ##################################################################################################
-			# 	# if king.levels.current_level > old_level or (king.levels.current_level == old_level and king.y < old_y):
-			# 	# 	reward[index]+= 1
-			# 	# else:
-			# 	# 	self.visited[(king.levels.current_level, king.y)] = self.visited.get((king.levels.current_level, king.y), 0) + 1
-			# 	# 	if self.visited[(king.levels.current_level, king.y)] < self.visited[(old_level, old_y)]:
-			# 	# 		self.visited[(king.levels.current_level, king.y)] = self.visited[(old_level, old_y)] + 1
-
-			# 	# 	#king.reward+= -self.visited[(king.levels.current_level, king.y)]* 0.1 
-			# 	# ####################################################################################################
-			# 	# if king.maxy < king.y:
-			# 	# 	king.update_max_y(king.y)
-			# 	# 	king.reward+= 0.1
-			# 	# # if king.levels.current_level == old_level and king.y < old_y:
-			# 	# # 	king.reward+=0.5
-			# 	# # if king.levels.current_level > old_level:
-			# 	# # 	king.reward+=1
-			# 	# if king.maxy == old_y: #penalize for staying on the same vertical spot i.e not jumping
-			# 	# 	king.reward+= -0.1
-			# 	pass
 			if king.maxy > king.y and self.move_available(king):
 				king.update_max_y(king.y)
 
@@ -208,7 +181,7 @@ class JKGame:
 
 	def _update_gamestuff(self, actions=None):
 
-		self.levels.update_levels(self.kings, self.babe, agentCommand=actions)
+		self.levels.update_levels(self.kings, agentCommand=actions)
 
 	def _update_guistuff(self):
 
@@ -217,7 +190,7 @@ class JKGame:
 		# 	self.menus.update() menu
 
 		if not os.environ["gaming"]:
-
+			print("WHY THE FUCK IS THIS RUNNING LMAO")
 			self.start.update()
 
 	def _update_gamescreen(self):
@@ -323,7 +296,7 @@ def calculate_distance(king, platform):
 	closest_x = min(abs(platform.x-king.x),abs(platform.x + platform.width-king.x))
 	if platform.width <= 8 :
 		distance = 1000
-		closest_y = 0
+		closest_y = 1000
 	# Find the closest point on the platform rectangle to the king
 	else :
 		
@@ -420,6 +393,7 @@ def eval_genomes(genomes, config):
 	print("Generation: " + str(generation))
 	print("Number of Moves: " + str(n_moves))
 	generation += 1
+
 	while True:
 		for index, king in enumerate(env.kings):
 			if len(actions_queue[index]) > 0:
@@ -433,7 +407,7 @@ def eval_genomes(genomes, config):
 					kings_move_count[index] += 1
 				else:
 					actions[index] = 4
-			
+
 			elif (len(actions_queue[index]) == 0):
 				kings_finished_list[index] = 1
 				actions[index] = 4
@@ -502,10 +476,10 @@ def run(config_file):
 	p.add_reporter(stats)
 
 	
-	winner = p.run(eval_genomes, 100)
+	winner = p.run(eval_genomes, 2)
 
-	print('\nBest genome:\n{!s}'.format(winner))
-	print('\nTraining completed. Reason: {!s}'.format(p.stop_reason))
+	# print('\nBest genome:\n{!s}'.format(winner))
+	# print('\nTraining completed. Reason: {!s}'.format(p.stop_reason))
 
 def run_game():
     run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
@@ -537,5 +511,9 @@ if __name__ == "__main__":
 # 	Game = JKGame(2)
 # 	Game.running()
 # 	#train(1)
- 	run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
-# 	#run_game()
+ 	#run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
+	# cProfile.run('run_game()', 'profile_results')
+	# import pstats
+	# p = pstats.Stats('profile_results')
+	# p.sort_stats('cumulative').print_stats()
+	run_game()

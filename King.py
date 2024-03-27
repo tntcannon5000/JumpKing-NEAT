@@ -252,41 +252,29 @@ class King():
 
 	def update(self, command=None, agentCommand=None):
 
-		if os.environ.get("mode") == "normal":
+		if not self.isFalling:
 
-			if not self.isFalling:
+			self._check_events(agentCommand)
 
-				self._check_events(agentCommand)
+		self._update_audio1()
 
-			self._update_audio1()
+		self._update_particles()
 
-			self._update_particles()
+		self._add_gravity()
 
-			self._add_gravity()
+		self._move()
 
-			self._move()
+		self._check_collisions()
 
-			self._check_collisions()
+		self._update_vectors()
 
-			self._update_vectors()
+		self._update_sprites()
 
-			self._update_sprites()
+		self._update_audio2()
 
-			self._update_audio2()
+		#self._check_level()
 
-			#self._check_level()
-
-			self._update_timer()
-
-			self._update_stats()
-
-		else:
-
-			self._creative()
-
-			#self._check_level()
-
-			self._update_sprites()
+		self._update_timer()
 
 	def _robot_check_events(self, command):
 
@@ -1169,12 +1157,6 @@ class King():
 			self.timer.start()
 
 		self.time += self.timer.elapsed_time()
-
-	def _update_stats(self):
-
-		os.environ["TIME"] = str(self.time)
-		os.environ["JUMPS"] = str(self.jumps)
-		os.environ["FALLS"]  = str(self.falls)
 
 
 	def reset(self):
