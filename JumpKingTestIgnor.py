@@ -152,6 +152,36 @@ class JKGame:
 		pygame.display.update()
 		reward = [0] * len(self.kings)
 
+		for index,king in enumerate(self.kings):
+			old_y = king.y
+			if self.move_available(king):
+					
+				# #self.step_counter += 1
+				# ##################################################################################################
+				# # Define the reward from environment                                                             #
+				# ##################################################################################################
+				# if king.levels.current_level > old_level or (king.levels.current_level == old_level and king.y < old_y):
+				# 	reward[index]+= 1
+				# else:
+				# 	self.visited[(king.levels.current_level, king.y)] = self.visited.get((king.levels.current_level, king.y), 0) + 1
+				# 	if self.visited[(king.levels.current_level, king.y)] < self.visited[(old_level, old_y)]:
+				# 		self.visited[(king.levels.current_level, king.y)] = self.visited[(old_level, old_y)] + 1
+
+				# 	#king.reward+= -self.visited[(king.levels.current_level, king.y)]* 0.1 
+				# ####################################################################################################
+				# if king.maxy < king.y:
+				# 	king.update_max_y(king.y)
+				# 	king.reward+= 0.1
+				# # if king.levels.current_level == old_level and king.y < old_y:
+				# # 	king.reward+=0.5
+				# # if king.levels.current_level > old_level:
+				# # 	king.reward+=1
+				# if king.maxy == old_y: #penalize for staying on the same vertical spot i.e not jumping
+				# 	king.reward+= -0.1
+				pass
+			if king.maxy > king.y and self.move_available(king):
+				king.update_max_y(king.y)
+	
 
 	
 
@@ -377,6 +407,7 @@ def generate_random_move():
 		random_list.append(1)
 	else:
 		random_list.append(4)
+		print("IDLE CHOSEN : after random list : "+str(random_list)+"number chosen : "+str(number))
 	return random_list
 	
 
@@ -389,7 +420,8 @@ def eval_genomes(genomes, config):
 		3: 'left+space',
 		4: 'idle',
 		#5: 'space',
-	}
+	}        
+
 	env = JKGame(max_step=100000, n_kings=len(genomes), n_levels=2)
 	env.reset()
 
@@ -400,7 +432,7 @@ def eval_genomes(genomes, config):
 		net = neat.nn.FeedForwardNetwork.create(genome, config)
 		nets.append(net)
 		actions_queue.append([])
-	 
+
 	actions = [0] * len(genomes)
 	
 	kings_move_count = [0] * len(genomes)
@@ -422,16 +454,18 @@ def eval_genomes(genomes, config):
 					kings_move_count[index] += 1
 				else:
 					actions[index] = 4
+					print("IDLE CHOSEN : after moves run out: "+str(actions[index]))
 			
 			elif (len(actions_queue[index]) == 0):
 				actions[index] = 4
+				print("IDLE CHOSEN after generations run out")
 				if all(kings_move_count >= n_moves for kings_move_count in kings_move_count) and all(env.move_available(k) for k in env.kings):
 					toquit = True
 		
 		
 		env.step(actions)
 		for index, genome in enumerate(genomes):
-			genome[1].fitness = ((360*env.n_levels)-env.kings[index].maxy)
+			genome[1].fitness = env.kings[index].reward
 
 		if toquit:
 			# for index, genome in enumerate(genomes):
@@ -469,8 +503,8 @@ def run_game():
 # 	for p in processes:
 # 		p.join()
 
-if __name__ == "__main__":
-#	train_n_games(1)
+# if __name__ == "__main__":
+# train_n_games(1)
 # if __name__ == "__main__":
 #     p1 = Process(target=run_game)
 #     p2 = Process(target=run_game)
@@ -481,7 +515,7 @@ if __name__ == "__main__":
 #     p1.join()
 #     p2.join()
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
 # 	Game = JKGame(2)
 # 	Game.running()
 # 	#train(1)
