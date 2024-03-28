@@ -84,6 +84,8 @@ class King():
 
 		self.maxy_reward = 100
 
+		self.old_platform_reward = 50
+
 		self.landed_platforms = []
 
 		# Booleans
@@ -466,6 +468,7 @@ class King():
 			and round(self.rect_y + self.rect_height - platform.rect.top, 4) <= math.ceil(-math.cos(self.angle) * self.speed)
 			#and round(-math.cos(self.angle), 4) > 0
 		):
+			
 			if platform not in self.landed_platforms:
 				self.reward += self.new_platform_reward
 				self.landed_platforms.append(platform)
