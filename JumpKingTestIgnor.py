@@ -127,8 +127,12 @@ class JKGame:
 		pygame.display.update()
 
 		for index,king in enumerate(self.kings):
+			# if king.y < king.maxy and self.move_available(king):
+			# 	print("LMFAO MINUS 100 FOR YOU")
+			# 	king.reward -= 100
 			if king.maxy > king.y and self.move_available(king):
 				king.update_max_y(king.y)
+			
 
 	def running(self):
 		"""
@@ -311,17 +315,15 @@ def get_surrounding_platforms(env, king):
 	zone_of_vision_size_y = 360
 	surrounding_platforms = []
 	MAX_PLATFORM_LEVELS = 40
-	for platform in env.levels.levels[env.levels.current_level].platforms: 
-		# Calculate relative distances to the king
-		relative_x,relative_y,distance_to_platform = calculate_distance(king, platform)
-		if abs(relative_x) <= king.x+zone_of_vision_size_x and abs(relative_y) <= king.y+zone_of_vision_size_y: 
+	for level in env.levels_list:
+		for platform in level.levels[level.current_level].platforms: 
+			# Calculate relative distances to the king
+			relative_x,relative_y,distance_to_platform = calculate_distance(king, platform)
 			surrounding_platforms.append((relative_x, relative_y))
 
 	# Pad out the surrounding_platforms list with Max_platform_levels - len(surrounding_platforms) values
 	surrounding_platforms += [(-1,-1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
 	return surrounding_platforms
-
-	
 
 def generate_ml_move(env, king, nets):
 	surrounding_platforms = [item for sublist in get_surrounding_platforms(env, king) for item in sublist]
@@ -351,7 +353,7 @@ def generate_random_move():
 		random_list.append(1)
 	else:
 		random_list.append(4)
-	return random_list
+	return random_list 	
 	
 
 def eval_genomes(genomes, config):
@@ -396,24 +398,29 @@ def eval_genomes(genomes, config):
 
 	while True:
 		for index, king in enumerate(env.kings):
-			if len(actions_queue[index]) > 0:
-				actions[index] = actions_queue[index].pop(0)
-
-			elif len(actions_queue[index]) == 0 and kings_move_count[index] < n_moves:
-				if env.move_available(king):
-					#actions_queue[index] = generate_random_move()
-					actions_queue[index] = generate_ml_move(env, king, nets)
+			if kings_finished_list[index] == 1:
+				actions[index] = 4
+			else:
+				if len(actions_queue[index]) > 0:
 					actions[index] = actions_queue[index].pop(0)
-					kings_move_count[index] += 1
-				else:
+
+				elif len(actions_queue[index]) == 0 and kings_move_count[index] < n_moves:
+					if env.move_available(king):
+						#actions_queue[index] = generate_random_move()
+						actions_queue[index] = generate_ml_move(env, king, nets)
+						actions[index] = actions_queue[index].pop(0)
+						kings_move_count[index] += 1
+					else:
+						actions[index] = 4
+
+				elif (len(actions_queue[index]) == 0):
+					kings_finished_list[index] = 1
 					actions[index] = 4
 
-			elif (len(actions_queue[index]) == 0):
-				kings_finished_list[index] = 1
-				actions[index] = 4
-				if sum(kings_finished_list) >= len(env.kings)-1:
-					if all(kings_move_count >= n_moves for kings_move_count in kings_move_count) and all(env.move_available(k) for k in env.kings):
-						toquit = True
+		
+		if sum(kings_finished_list) >= len(env.kings)-1:
+			if all(kings_move_count >= n_moves for kings_move_count in kings_move_count) and all(env.move_available(k) for k in env.kings):
+				toquit = True
 		
 		
 		env.step(actions)
@@ -421,8 +428,8 @@ def eval_genomes(genomes, config):
 			genome[1].fitness = env.kings[index].reward
 
 		if toquit:
-			# for index, genome in enumerate(genomes):
-			# 	print(f"King {index+1} Fitness: {genome[1].fitness}")
+			for index, genome in enumerate(genomes):
+				print(f"King {index+1} Fitness: {genome[1].fitness}")
 			for level in env.levels_list:
 				del level.background_audio
 				del level.channels
@@ -476,7 +483,7 @@ def run(config_file):
 	p.add_reporter(stats)
 
 	
-	winner = p.run(eval_genomes, 2)
+	winner = p.run(eval_genomes, 100)
 
 	# print('\nBest genome:\n{!s}'.format(winner))
 	# print('\nTraining completed. Reason: {!s}'.format(p.stop_reason))

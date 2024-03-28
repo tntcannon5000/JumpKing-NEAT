@@ -24,7 +24,7 @@ class Rectangles:
 
 		self.levels[1]	=	[(296, 296, 95, 38, 0, 0, False, False),
 							(409, 197, 71, 35, 0, 0, False, False),
-							(255, 199, 74, 33, 0, 0, False, False),
+							(255, 192, 74, 33, 0, 0, False, False),
 							(119, 103, 74, 65, 0, 0, False, False),
 							(0, 80, 81, 86, 0, 0, False, False),
 							(0, 0, 8, 360, 0, 0, False, False),

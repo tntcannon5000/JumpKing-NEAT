@@ -78,7 +78,7 @@ class King():
 
 		self.jumpAngles = {'up' : 0, 'left' : -math.pi/3, 'right' : math.pi/3}
 
-		self.collision_penalty = 5
+		self.collision_penalty = 10
 
 		self.new_platform_reward = 200
 
