@@ -80,7 +80,7 @@ class King():
 
 		self.collision_penalty = 10
 
-		self.new_platform_reward = 200
+		self.new_platform_reward = 230
 
 		self.maxy_reward = 100
 
