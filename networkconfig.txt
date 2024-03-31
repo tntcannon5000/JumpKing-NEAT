@@ -12,7 +12,7 @@ activation_options      = sigmoid
 
 # node aggregation options
 aggregation_default     = sum
-aggregation_mutate_rate = 0.8
+aggregation_mutate_rate = 0.01
 aggregation_options     = sum
 
 # node bias options
@@ -34,7 +34,7 @@ conn_delete_prob        = 0.2
 
 # connection enable options
 enabled_default         = True
-enabled_mutate_rate     = 0.01
+enabled_mutate_rate     = 0.21
 
 feed_forward            = True
 initial_connection      = fs_neat_hidden
@@ -45,7 +45,7 @@ node_delete_prob        = 0.1
 
 # network parameters
 num_hidden              = 2
-num_inputs              = 80
+num_inputs              = 24
 num_outputs             = 5
 
 # node response options
@@ -67,7 +67,7 @@ weight_mutate_rate      = 0.9
 weight_replace_rate     = 0.1
 
 [DefaultSpeciesSet]
-compatibility_threshold = 3.0
+compatibility_threshold = 2.6
 
 [DefaultStagnation]
 species_fitness_func = max
@@ -75,5 +75,5 @@ max_stagnation       = 6
 species_elitism      = 2
 
 [DefaultReproduction]
-elitism            = 4
+elitism            = 2
 survival_threshold = 0.2

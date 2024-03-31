@@ -295,42 +295,91 @@ class JKGame:
 
 			pygame.mixer.Channel(channel).set_volume(float(os.environ.get("volume")))
 
-def calculate_distance(king, platform):
-    #Ignore the side walls as we do not need them
-	closest_x = min(abs(platform.x-king.x),abs(platform.x + platform.width-king.x))
-	if platform.width <= 8 :
-		distance = 1000
-		closest_y = 1000
-	# Find the closest point on the platform rectangle to the king
-	else :
+# def calculate_distance(king, platform):
+#     #Ignore the side walls as we do not need them
+# 	closest_x = min(abs(platform.x-king.x),abs(platform.x + platform.width-king.x))
+# 	if platform.width <= 8 :
+# 		distance = 1000
+# 		closest_y = 1000
+# 	# Find the closest point on the platform rectangle to the king
+# 	else :
 		
-		closest_y = min(abs(platform.y-king.y),abs(platform.y + platform.height-king.y))
+# 		closest_y = min(abs(platform.y-king.y),abs(platform.y + platform.height-king.y))
 
-		# Calculate the distance between the king and the closest point
-		distance = math.sqrt(closest_x ** 2 + closest_y ** 2)
-	return closest_x,closest_y,distance
+# 		# Calculate the distance between the king and the closest point
+# 		distance = math.sqrt(closest_x ** 2 + closest_y ** 2)
+# 	return closest_x,closest_y,distance
+
+# def get_surrounding_platforms(env, king):
+# 	zone_of_vision_size_x = 480  # Adjust as needed
+# 	zone_of_vision_size_y = 360
+# 	surrounding_platforms = []
+# 	MAX_PLATFORM_LEVELS = 40
+# 	for level in env.levels_list:
+# 		for platform in level.levels[level.current_level].platforms: 
+# 			# Calculate relative distances to the king
+# 			relative_x,relative_y,distance_to_platform = calculate_distance(king, platform)
+# 			surrounding_platforms.append((relative_x/480, relative_y/(360*env.n_levels)))
+
+# 	# Pad out the surrounding_platforms list with Max_platform_levels - len(surrounding_platforms) values
+# 	surrounding_platforms += [(-1,-1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
+# 	return surrounding_platforms
+
+
+def calculate_distances(env, king, platform):
+    #Ignore the side walls as we do not need them
+
+	if (platform.y < king.y) and (platform.width > 8) and abs(platform.y-king.y) < 165:
+		deltax = platform.x - king.x
+		if deltax <= 0:
+			l = 1
+			r = 0 
+			closest_x = platform.x+platform.width
+			closest_y = platform.y
+			dist_x = abs(platform.x+platform.width - king.x)
+			dist_y = abs(platform.y - king.y)
+			distance = math.sqrt((dist_x/480) ** 2 + (dist_y/(360*env.n_levels)) ** 2)
+			return l, r, closest_y, distance
+		elif deltax > 0:
+			l = 0
+			r = 1
+			closest_x = platform.x
+			closest_y = platform.y
+			dist_x = abs(platform.x - king.x)
+			dist_y = abs(platform.y - king.y)
+			distance = math.sqrt((dist_x/480) ** 2 + (dist_y/(360*env.n_levels)) ** 2)
+			return l, r, closest_y, distance
+	else:
+		return None, None, None, None
+	# Find the closest point on the platform rectangle to the king
+	
+
 
 def get_surrounding_platforms(env, king):
-	zone_of_vision_size_x = 480  # Adjust as needed
-	zone_of_vision_size_y = 360
+	#zone_of_vision_size_x = 480  # Adjust as needed
+	#zone_of_vision_size_y = 360
 	surrounding_platforms = []
-	MAX_PLATFORM_LEVELS = 40
+	MAX_PLATFORM_LEVELS = 6
 	for level in env.levels_list:
 		for platform in level.levels[level.current_level].platforms: 
 			# Calculate relative distances to the king
-			relative_x,relative_y,distance_to_platform = calculate_distance(king, platform)
-			surrounding_platforms.append((relative_x/480, relative_y/(360*env.n_levels)))
-
+			l, r, relative_y, distance_to_platform = calculate_distances(env, king, platform)
+			if relative_y is not None and distance_to_platform is not None:
+				surrounding_platforms.append((l, r, relative_y/(360*env.n_levels), distance_to_platform))
 	# Pad out the surrounding_platforms list with Max_platform_levels - len(surrounding_platforms) values
-	surrounding_platforms += [(-1,-1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
+	
+	surrounding_platforms += [(-1, -1, -1, -1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
+
 	return surrounding_platforms
 
 def generate_ml_move(env, king, nets):
 	surrounding_platforms = [item for sublist in get_surrounding_platforms(env, king) for item in sublist]
 	inputs = surrounding_platforms
 	output = nets[env.kings.index(king)].activate(inputs)
-	
 	length = int(round(output[4] * 31))
+	if length < 4:
+		alist = generate_random_move()
+		return alist
 	number = output.index(max(output[0:4]))
 
 	alist = [number] * length
@@ -353,7 +402,7 @@ def generate_random_move():
 		random_list.append(1)
 	else:
 		random_list.append(4)
-	return random_list 	
+	return random_list
 	
 
 def eval_genomes(genomes, config):
@@ -370,7 +419,7 @@ def eval_genomes(genomes, config):
 		#5: 'space',
 	}                
 
-	env = JKGame(max_step=100000, n_kings=len(genomes), n_levels=2)
+	env = JKGame(max_step=100000, n_kings=len(genomes), n_levels=3)
 	env.reset()
 
 	nets = []
@@ -381,15 +430,14 @@ def eval_genomes(genomes, config):
 		nets.append(net)
 		actions_queue.append([])
 
-
 	actions = [0] * len(genomes)
 	
 	kings_move_count = [0] * len(genomes)
-	kings_finished_list = [0] * len(genomes)
+	kings_finished_list = [0] * len(genomes)	
 
 	# Actually doing some training
-	if generation % 5 == 0:
-		n_moves += (int(generation/5)*5)
+	if generation > 5:
+		n_moves = int(round(generation*1.6))
 	running = True
 	toquit = False
 	print("Generation: " + str(generation))
@@ -411,9 +459,10 @@ def eval_genomes(genomes, config):
 						actions[index] = actions_queue[index].pop(0)
 						kings_move_count[index] += 1
 					else:
+						#print("THIS TRIGERED")
 						actions[index] = 4
 
-				elif (len(actions_queue[index]) == 0):
+				elif (len(actions_queue[index]) == 0) and kings_move_count[index] >= n_moves:
 					kings_finished_list[index] = 1
 					actions[index] = 4
 
@@ -422,7 +471,7 @@ def eval_genomes(genomes, config):
 			if all(kings_move_count >= n_moves for kings_move_count in kings_move_count) and all(env.move_available(k) for k in env.kings):
 				toquit = True
 		
-		
+		#print(actions)
 		env.step(actions)
 		for index, genome in enumerate(genomes):
 			genome[1].fitness = env.kings[index].reward
@@ -483,7 +532,7 @@ def run(config_file):
 	p.add_reporter(stats)
 
 	
-	winner = p.run(eval_genomes, 100)
+	winner = p.run(eval_genomes, 10000)
 
 	# print('\nBest genome:\n{!s}'.format(winner))
 	# print('\nTraining completed. Reason: {!s}'.format(p.stop_reason))
