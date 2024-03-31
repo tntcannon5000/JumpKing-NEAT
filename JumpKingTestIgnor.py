@@ -329,7 +329,7 @@ class JKGame:
 def calculate_distances(env, king, platform):
     #Ignore the side walls as we do not need them
 
-	if (platform.y < king.y) and (platform.width > 8) and abs(platform.y-king.y) < 165:
+	if (platform.y < king.y) and (platform.width > 8) and abs(platform.y-king.y) < 154:
 		deltax = platform.x - king.x
 		if deltax <= 0:
 			l = 1
@@ -342,7 +342,7 @@ def calculate_distances(env, king, platform):
 			return l, r, closest_y, distance
 		elif deltax > 0:
 			l = 0
-			r = 1
+			r = 1	
 			closest_x = platform.x
 			closest_y = platform.y
 			dist_x = abs(platform.x - king.x)
@@ -374,7 +374,7 @@ def get_surrounding_platforms(env, king):
 
 def generate_ml_move(env, king, nets):
 	surrounding_platforms = [item for sublist in get_surrounding_platforms(env, king) for item in sublist]
-	inputs = surrounding_platforms
+	inputs = surrounding_platforms#	 + [king.y/(360*env.n_levels)]
 	output = nets[env.kings.index(king)].activate(inputs)
 	length = int(round(output[4] * 31))
 	if length < 4:
