@@ -23,7 +23,7 @@ n_moves = 8
 class JKGame:
 	""" Overall class to manga game aspects """
         
-	def __init__(self, n_kings, n_levels, max_step=float('inf')):
+	def __init__(self, n_kings, n_levels):
 
 		self.n_levels = n_levels
 		pygame.init()
@@ -65,17 +65,14 @@ class JKGame:
 		#4: 'idle',
 		# 5: 'space',
 		} 
-		self.action_keys = list(self.action_dict.keys())  
-		#print("BP 2")
+		self.action_keys = list(self.action_dict.keys())
 		self.env_started = 0
 
 		self.step_counter = 0
-		self.max_step = max_step
 
 		self.visited = {}
 
 		pygame.display.set_caption('Jump King At Home XD')
-		#print("BP 3")
 
 
 	def reset(self):
@@ -83,7 +80,6 @@ class JKGame:
 		for king in self.kings:
 			king.reset()
 
-		#self.levels.reset()
 		os.environ["start"] = "1"
 		os.environ["gaming"] = "1" 
 		os.environ["pause"] = ""
@@ -96,19 +92,13 @@ class JKGame:
 		
 		for king in self.kings:
 			for level in self.levels_list:
-				# state = [king.levels.current_level, king.x, king.y, king.jumpCount]
 
 				self.visited = {}
 				self.visited[(level, king.y)] = 1    
-		
-		# self.king.reset()
-		# state = [self.king.levels.current_level, self.king.x, self.king.y, self.king.jumpCount]
-
-		# self.visited = {}
-		# self.visited[(self.king.levels.current_level, self.king.y)] = 1
 
 		return done
 
+	# Checks wether the king can move or not
 	def move_available(self, king):
 		available = not king.isFalling \
 		and (not king.isSplat or king.splatCount > king.splatDuration)
@@ -116,20 +106,18 @@ class JKGame:
 
 	def step(self, actions):
 		
-		#old_y = (self.king.levels.max_level - self.king.levels.current_level) * 360 + self.king.y
 		self.clock.tick(self.fps)
 		self._check_events()
-		#if not os.environ["pause"]:	To do if we want to do it xd
+		#if not os.environ["pause"]:
+		#Pass the actions to the game environment to make the king move
 		self._update_gamestuff(actions=actions)
 		self._update_gamescreen()
 		self._update_guistuff()
 		self._update_audio()
 		pygame.display.update()
 
+		#Update the max y value of the king if the king can move which means the king is on top of a platform
 		for index,king in enumerate(self.kings):
-			# if king.y < king.maxy and self.move_available(king):
-			# 	print("LMFAO MINUS 100 FOR YOU")
-			# 	king.reward -= 100
 			if king.maxy > king.y and self.move_available(king):
 				king.update_max_y(king.y)
 			
@@ -141,8 +129,6 @@ class JKGame:
 		"""
 		self.reset()
 		while True:
-			#state = [self.king.levels.current_level, self.king.x, self.king.y, self.king.jumpCount]
-			#print(state)
 			self.clock.tick(self.fps)
 			self._check_events()
 			if not os.environ["pause"]:
@@ -194,7 +180,6 @@ class JKGame:
 		# 	self.menus.update() menu
 
 		if not os.environ["gaming"]:
-			print("WHY THE FUCK IS THIS RUNNING LMAO")
 			self.start.update()
 
 	def _update_gamescreen(self):
@@ -296,7 +281,6 @@ class JKGame:
 			pygame.mixer.Channel(channel).set_volume(float(os.environ.get("volume")))
 
 def calculate_distance(king, platform):
-    #Ignore the side walls as we do not need them
 	closest_x = min(abs(platform.x-king.x),abs(platform.x + platform.width-king.x))
 	if platform.width <= 8 :
 		distance = 1000
@@ -310,14 +294,13 @@ def calculate_distance(king, platform):
 		distance = math.sqrt(closest_x ** 2 + closest_y ** 2)
 	return closest_x,closest_y,distance
 
+# Function to get the surrounding platforms of the king
 def get_surrounding_platforms(env, king):
-	zone_of_vision_size_x = 480  # Adjust as needed
-	zone_of_vision_size_y = 360
 	surrounding_platforms = []
 	MAX_PLATFORM_LEVELS = 40
+	# Fetch all the platforms in the levels loaded
 	for level in env.levels_list:
-		for platform in level.levels[level.current_level].platforms: 
-			# Calculate relative distances to the king
+		for platform in level.levels[level.current_level].platforms:
 			relative_x,relative_y,distance_to_platform = calculate_distance(king, platform)
 			surrounding_platforms.append((relative_x/480, relative_y/(360*env.n_levels)))
 
@@ -325,24 +308,29 @@ def get_surrounding_platforms(env, king):
 	surrounding_platforms += [(-1,-1)] * (MAX_PLATFORM_LEVELS - len(surrounding_platforms))
 	return surrounding_platforms
 
+# Function to generate moves for the king using the NEAT algorithm
 def generate_ml_move(env, king, nets):
 	surrounding_platforms = [item for sublist in get_surrounding_platforms(env, king) for item in sublist]
 	inputs = surrounding_platforms
 	output = nets[env.kings.index(king)].activate(inputs)
-	
+ 
+	# The 4th output is the number of steps the king will take. It is scaled to 31 because that is the max limit it can crouch to make a jump	
 	length = int(round(output[4] * 31))
+	# Choosing one of the steps form 0-4 based on the max output value
 	number = output.index(max(output[0:4]))
-
+ 
 	alist = [number] * length
+	# If the move is 2 i.e right+space, add 0 to let go of the space key and move right since 0 is right
 	if number == 2:
 		alist.append(0)
+  	# If the move is 3 i.e left+space, add 1 to let go of the space key and move left since 1 is left
 	elif number == 3:
 		alist.append(1)
 	else:
 		alist.append(4)
 	return alist
 
-
+# Function to generate random moves for the king to test if code is working correctly
 def generate_random_move():
 	length = np.random.randint(1, 30)
 	number = random.randint(0, 3)
@@ -355,22 +343,22 @@ def generate_random_move():
 		random_list.append(4)
 	return random_list 	
 	
-
+# Function to evaluate the genomes
 def eval_genomes(genomes, config):
 
+	# Setting up global variables to increase the number of moves a king can make in a generation as the generations progress
 	global generation
 	global n_moves
-	# Environment Preparation
-	action_dict = {
-		0: 'right',
-		1: 'left',
-		2: 'right+space',
-		3: 'left+space',
-		4: 'idle',
-		#5: 'space',
-	}                
+	# Moves available to the king and their corresponding numbers
+	# 0: 'right',
+	# 1: 'left',
+	# 2: 'right+space',
+	# 3: 'left+space',
+	# 4: 'idle',
+	# 5: 'space',             
 
-	env = JKGame(max_step=100000, n_kings=len(genomes), n_levels=2)
+	# Initializing the game environment with the number of genomes for the generation and the number of levels we want to play
+	env = JKGame(n_kings=len(genomes), n_levels=2)
 	env.reset()
 
 	nets = []
@@ -387,46 +375,54 @@ def eval_genomes(genomes, config):
 	kings_move_count = [0] * len(genomes)
 	kings_finished_list = [0] * len(genomes)
 
-	# Actually doing some training
+	# Increasing moves every 5 generations
 	if generation % 5 == 0:
 		n_moves += (int(generation/5)*5)
 	running = True
 	toquit = False
 	print("Generation: " + str(generation))
 	print("Number of Moves: " + str(n_moves))
+	#Counting the generations
 	generation += 1
 
+	
 	while True:
 		for index, king in enumerate(env.kings):
+			# If the king has finished all moves for the level, set the action to idle
 			if kings_finished_list[index] == 1:
 				actions[index] = 4
 			else:
+				# If the action set of steps for a move has not finished, get the next action from the queue
 				if len(actions_queue[index]) > 0:
 					actions[index] = actions_queue[index].pop(0)
-
+				# If the action set of steps for a move has finished, check if the king has moves left for the generation
 				elif len(actions_queue[index]) == 0 and kings_move_count[index] < n_moves:
+					#Check if the king can move
 					if env.move_available(king):
 						#actions_queue[index] = generate_random_move()
+						#Get a set of steps for a move from the network
 						actions_queue[index] = generate_ml_move(env, king, nets)
 						actions[index] = actions_queue[index].pop(0)
 						kings_move_count[index] += 1
+					#Stay idle if the king cannot move i.e if it is falling
 					else:
 						actions[index] = 4
-
+				# If the king has finished all moves for the generation, set the action to idle and update the list of kings that have finished
 				elif (len(actions_queue[index]) == 0):
 					kings_finished_list[index] = 1
 					actions[index] = 4
 
-		
+		# Check if all kings have finished all moves for the generation and if all kings can move
 		if sum(kings_finished_list) >= len(env.kings)-1:
 			if all(kings_move_count >= n_moves for kings_move_count in kings_move_count) and all(env.move_available(k) for k in env.kings):
 				toquit = True
 		
-		
+		# Calling step function to update step of each king with the actions obtained from the network.
 		env.step(actions)
 		for index, genome in enumerate(genomes):
 			genome[1].fitness = env.kings[index].reward
 
+		# Deleting the environment and the kings to free up memory after the generation has finished
 		if toquit:
 			for level in env.levels_list:
 				del level.background_audio
@@ -470,7 +466,7 @@ def eval_genomes(genomes, config):
 			gc.collect()
 			break
 
-
+# Running the NEAT algorithm
 def run(config_file):
 	config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_file)
 	p = neat.Population(config)
@@ -483,9 +479,7 @@ def run(config_file):
 	
 	winner = p.run(eval_genomes, 100)
 
-	# print('\nBest genome:\n{!s}'.format(winner))
-	# print('\nTraining completed. Reason: {!s}'.format(p.stop_reason))
-
+# Fetching the configuration file and passing it to the run function
 def run_game():
     run(os.path.join(os.path.dirname(__file__), 'networkconfig.txt'))
 
