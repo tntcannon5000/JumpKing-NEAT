@@ -219,27 +219,10 @@ class Levels:
 
 	def update_levels(self, kings, agentCommand):
 
-		# for king in kings:
-		# 	self.update_wind(king)
-
-		# 	self.update_hiddenwalls(king)
-
-		# 	self.update_npcs(king)
-
-		# 	self.update_readables(king)
-
-		# 	self.update_flyers(king)
-
-		# 	self.update_discovery(king)
-
-		# 	self.update_audio()
-
 		for index, king in enumerate(kings):
-				
+			# Make the king move only if the command is from the network and not from the keyboard	
 			if agentCommand is not None:
 				king.update(agentCommand=agentCommand[index])
-
-			#babe.update(king)
 
 
 	def update_flyers(self, king):
