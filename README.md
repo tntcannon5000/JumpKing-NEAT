@@ -1,6 +1,8 @@
 # Jump King
- Jump King With Pygame.
- Run JumpKing.exe to play
+ Jump King With Pygame.\
+ Run JumpKing.exe to play\
+ Open JumpKingNEAT.py and run the file to commence NEAT training\
+*Optionally*: you can change the number of levels loaded by changing the value of n_levels when loading the JKGame object in the eval_genomes() function.
  ## Gameplay
   ![image](https://user-images.githubusercontent.com/67669987/92433021-c6033c80-f150-11ea-8b53-2936438f5dba.png)
   ![image](https://user-images.githubusercontent.com/67669987/92433069-de735700-f150-11ea-8a77-0895216d5892.png)
@@ -12,7 +14,7 @@
   
 ## Group Project
   This game was forked from : https://github.com/senweim/JumpKingAtHome 
-  We have tried to beat the game usin a Neural network created by the NEAT algorithm
+  We have tried to beat the game using a Neural network created by the NEAT algorithm
   Group Members include : Niranjan Mahtani Kewalramani (nnm22) Depapratim Kundu (dk433) Vipul Shewale (vs276) Dominykas Sliuzas (ds725) James Akindele (ja676)
 
 
