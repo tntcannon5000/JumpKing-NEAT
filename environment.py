@@ -10,10 +10,10 @@ import pygame
 
 class Environment:
 
-	def __init__(self):
+	def __init__(self, n_levels):
 
-		os.environ["hitboxes"] = ""
-		os.environ["screen_width"], os.environ["screen_height"] = str(480), str(360)
+		os.environ["hitboxes"] = "0"
+		os.environ["screen_width"], os.environ["screen_height"] = str(480), str(360*n_levels)
 		os.environ["window_scale"] = "1"
 		os.environ["fps"] = str(60)
 		os.environ["bg_color"] = str((0, 0, 0))
@@ -37,10 +37,9 @@ class Environment:
 		self._load_stats()
 
 	def _load_settings(self):	
-
 		if "settings.dat" in os.listdir("Saves"):
 
-			with open("Saves\\settings.dat", "rb") as file:
+			with open("Saves/settings.dat", "rb") as file:
 
 				state = pickle.load(file)
 
@@ -54,7 +53,7 @@ class Environment:
 
 		if "save.dat" in os.listdir("Saves"):
 
-			with open("Saves\\save.dat", "rb") as file:
+			with open("Saves/save.dat", "rb") as file:
 
 				state = pickle.load(file)
 
@@ -64,7 +63,7 @@ class Environment:
 
 		if "permanent.dat" in os.listdir("Saves"):
 
-			with open("Saves\\permanent.dat", "rb") as file:
+			with open("Saves/permanent.dat", "rb") as file:
 
 				state = pickle.load(file)
 
@@ -75,11 +74,11 @@ class Environment:
 
 		settings, permanent = self.game_state()
 
-		with open("Saves\\settings.dat", "wb") as file:
+		with open("Saves/settings.dat", "wb") as file:
 
 			pickle.dump(settings, file)
 
-		with open("Saves\\permanent.dat", "wb") as file:
+		with open("Saves/permanent.dat", "wb") as file:
 
 			pickle.dump(permanent, file)
 

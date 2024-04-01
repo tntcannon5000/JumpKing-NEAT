@@ -6,12 +6,11 @@
 
 import pygame
 import collections
-import os
 
 class Rectangles:
 
-	def __init__(self):
-
+	def __init__(self, n_levels):
+		self.n_levels = n_levels
 		self.levels = collections.defaultdict()
 
 		self.levels[0]	=	[(352, 185, 128, 175, 0, 0, False, False),
@@ -25,7 +24,7 @@ class Rectangles:
 
 		self.levels[1]	=	[(296, 296, 95, 38, 0, 0, False, False),
 							(409, 197, 71, 35, 0, 0, False, False),
-							(255, 199, 74, 33, 0, 0, False, False),
+							(255, 192, 74, 33, 0, 0, False, False),
 							(119, 103, 74, 65, 0, 0, False, False),
 							(0, 80, 81, 86, 0, 0, False, False),
 							(0, 0, 8, 360, 0, 0, False, False),
@@ -801,12 +800,19 @@ class Rectangles:
 							(336, 264, 32, 96, 0, 0, False, False),
 							(368, 144, 63, 7, 0, 0, False, False),
 							(425, 128, 6, 16, 0, 0, False, False)]
+		
+		for i in range(len(self.levels)-1):
+			for j in range(len(self.levels[i])):
+				x, y, width, height, slope, slip, support, snow = self.levels[i][j]
+				self.levels[i][j] = (x, y+(360*(n_levels-1-i)), width, height, slope, slip, support, snow)
+
 
 class Platform():
 
-	def __init__(self, x, y, width, height, slope = False, slip = False, support = False, snow = False):
+	def __init__(self, x, y, width, height, init_level, n_levels, slope = False, slip = False, support = False, snow = False):
 
 		self.x, self.y, self.width, self.height = x, y, width, height
+		#+360*((n_levels-1) - init_level) add this to y
 
 		self.type = "Land"
 
@@ -841,15 +847,18 @@ class Platform():
 
 class Platforms():
 
-	def __init__(self):
+	def __init__(self, init_level, n_levels):
 
-		self.rectangles = Rectangles()
+		self.rectangles = Rectangles(n_levels)
+
+		self.init_level = init_level
+		self.n_levels = n_levels
 
 	def platforms(self, level):
 
 		try:
 
-			return [Platform(*rectangle) for rectangle in self.rectangles.levels[level]]
+			return [Platform(*rectangle, self.init_level, self.n_levels) for rectangle in self.rectangles.levels[level]]
 
 		except:
 

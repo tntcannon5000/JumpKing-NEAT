@@ -11,16 +11,18 @@ import collections
 
 class Background():
 
-	def __init__(self, filename):
+	def __init__(self, filename, current_level, n_levels):
 
 		self.image = self._load_image(filename)
 
 		self.x, self.y = 0, 0
 		self.width, self.height = self.image.get_size()
+		self.current_level = current_level
+		self.n_levels = n_levels
 
 	@property
 	def rect(self):
-		return pygame.Rect(self.x, self.y, self.width, self.height)
+		return pygame.Rect(self.x, self.y+360*((self.n_levels-1)-self.current_level), self.width, self.height)
 	
 	def _load_image(self, filename, colorkey = None):
 
@@ -32,7 +34,7 @@ class Background():
 
 		except pygame.error as e:
 			print(f'Unable To Load Image: {filename}')
-			raise SystemExit(e)
+			#raise SystemExit(e)
 
 		return image
 
@@ -42,21 +44,23 @@ class Background():
 
 class Backgrounds():
 
-	def __init__(self, directory):
+	def __init__(self, directory, n_screen, n_levels):
 
 		pygame.init()
 
 		self.directory = directory
-
+		self.n_screen = n_screen
+		self.n_levels = n_levels
 		self.backgrounds = collections.defaultdict()
 
 		self._load_background_sprites()
+		
 
 	def _load_background_sprites(self):
 
 		for filename in sorted(os.listdir(self.directory), key = lambda filename: int(re.search(r'\d+', filename).group())):
 			
-			bg = Background(os.path.join(self.directory, filename))
+			bg = Background(os.path.join(self.directory, filename), self.n_screen, self.n_levels)
 
 			level = int(re.search(r'\d+', filename).group()) - 1
 

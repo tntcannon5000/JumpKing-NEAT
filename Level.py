@@ -5,7 +5,6 @@
 #
 
 import pygame
-import collections
 import os
 import math
 import sys
@@ -63,31 +62,40 @@ class Level:
 
 class Levels:
 
-	def __init__(self, screen):
+	def __init__(self, screen, init_level, n_levels):
 
 		self.max_level = 42
 
-		self.current_level = 0
-
+		self.current_level = init_level
+		self.reset_level = init_level
+		
 		self.current_level_name = None
+		self.n_levels = n_levels
 
 		self.screen = screen
 
 		# Objects
 
-		self.platforms = Platforms()
+		self.platforms = Platforms(self.current_level, n_levels)
 
-		self.background = Backgrounds("BG").backgrounds
+		print("current level: ", str(self.current_level) + "    " + str(360*((self.n_levels-1)-self.current_level)))
 
-		self.midground = Backgrounds("MG").backgrounds
 
-		self.foreground = Backgrounds("FG").backgrounds
+		self.background = Backgrounds("BG", self.current_level, n_levels).backgrounds
+
+		self.midground = Backgrounds("MG", self.current_level, n_levels).backgrounds
+
+		self.foreground = Backgrounds("FG", self.current_level, n_levels).backgrounds
+
+		print("backgrounds loaded!")
 
 		self.props = Props().props
 
 		self.weather = Weathers().weather
 
 		self.hiddenwalls = HiddenWalls().hiddenwalls
+
+		print("hiddenwalls loaded!")
 
 		self.scrollers = Scrollers()
 
@@ -101,6 +109,8 @@ class Levels:
 
 		self.Ending_Animation = Ending_Animation()
 
+		print("ending loaded!")
+
 		# Audio
 
 		self.background_audio = BackgroundAudio().level_audio
@@ -110,6 +120,8 @@ class Levels:
 		for channel in self.channels:
 
 			channel.set_volume(1.0)
+
+		print("audio loaded!")
 
 		# Movement 
 
@@ -121,7 +133,10 @@ class Levels:
 
 		self.levels = {}
 
+
+		print("about to load levels!")
 		self._load_levels()
+		print("levels loaded!")
 
 		# Ending
 
@@ -202,31 +217,13 @@ class Levels:
 
 			print("BLIT2 ERROR: ", e)
 
-	def update_levels(self, king, babe, agentCommand=None):
+	def update_levels(self, kings, agentCommand):
 
-		self.update_wind(king)
+		for index, king in enumerate(kings):
+			# Make the king move only if the command is from the network and not from the keyboard	
+			if agentCommand is not None:
+				king.update(agentCommand=agentCommand[index])
 
-		self.update_hiddenwalls(king)
-
-		self.update_npcs(king)
-
-		self.update_readables(king)
-
-		self.update_flyers(king)
-
-		self.update_discovery(king)
-
-		self.update_audio()
-
-		if self.ending:
-
-			self.END = self.Ending_Animation.update(self.levels[self.current_level], king, babe)
-
-		else:
-
-			king.update(agentCommand=agentCommand)
-
-			babe.update(king)
 
 	def update_flyers(self, king):
 
@@ -322,7 +319,8 @@ class Levels:
 
 		except Exception as e:
 
-			print("UPDATENPCS ERROR:", e)
+			#print("UPDATENPCS ERROR:", e)
+			pass
 
 	def update_hiddenwalls(self, king):
 
@@ -446,7 +444,7 @@ class Levels:
 
 	def reset(self):
 
-		self.current_level = 0
+		self.current_level = self.reset_level
 
 		self.wind.__init__(self.screen)
 
