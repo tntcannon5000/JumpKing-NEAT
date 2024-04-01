@@ -10,5 +10,9 @@
   ![image](https://user-images.githubusercontent.com/67669987/92433172-21cdc580-f151-11ea-9a12-9708510e37e2.png)
   ![image](https://user-images.githubusercontent.com/67669987/92433211-39a54980-f151-11ea-86bd-69212a2620da.png)
   
-## Thoughts
-  This was my first game I've made that had any type of physics. I really like Jump King and I wanted it to be part of my learning experience. This is a near-perfect replica of Jump King. Various things are still missing like the extras and end-game stuff. I added a few things to make the game a bit easier which include: a checkbox to show hitboxes under the graphics menu and a flying mode triggered by pressing "C". The code is a bit messy and there are probably a lot of bugs, but this was my first time making a project this big. It was a lot of fun!
+## Group Project
+  This game was forked from : https://github.com/senweim/JumpKingAtHome 
+  We have tried to beat the game usin a Neural network created by the NEAT algorithm
+  Group Members include : Niranjan Mahtani Kewalramani (nnm22) Depapratim Kundu (dk433) Vipul Shewale (vs276) Dominykas Sliuzas (ds725) James Akindele (ja676)
+
+
