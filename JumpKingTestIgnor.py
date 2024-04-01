@@ -428,8 +428,6 @@ def eval_genomes(genomes, config):
 			genome[1].fitness = env.kings[index].reward
 
 		if toquit:
-			for index, genome in enumerate(genomes):
-				print(f"King {index+1} Fitness: {genome[1].fitness}")
 			for level in env.levels_list:
 				del level.background_audio
 				del level.channels
